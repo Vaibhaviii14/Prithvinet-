@@ -15,8 +15,7 @@ const PollutionHeatmap = ({ data = [], center = [21.2514, 81.6296], zoom = 6 }) 
 
     // Function to determine color based on intensity
     const getColor = (intensity) => {
-        if (intensity > 150) return '#ef4444'; // Red (Critical)
-        if (intensity > 100) return '#f97316'; // Orange (High)
+        if (intensity > 100) return '#ef4444'; // Red (Critical)
         if (intensity > 50) return '#eab308'; // Yellow (Moderate)
         return '#00E676'; // Green (Good)
     };
@@ -39,7 +38,9 @@ const PollutionHeatmap = ({ data = [], center = [21.2514, 81.6296], zoom = 6 }) 
                     maxZoom={19}
                 />
 
-                {data.map((point, index) => (
+                {data.map((point, index) => {
+                    if (!point.lat || !point.lng) return null;
+                    return (
                     <CircleMarker
                         key={index}
                         center={[point.lat, point.lng]}
@@ -48,19 +49,26 @@ const PollutionHeatmap = ({ data = [], center = [21.2514, 81.6296], zoom = 6 }) 
                             color: getColor(point.intensity_weight),
                             fillColor: getColor(point.intensity_weight),
                             fillOpacity: 0.6,
-                            weight: 2
+                            weight: 2,
+                            className: point.has_active_alert ? 'pulse-marker' : ''
                         }}
                     >
                         <Popup className="custom-popup">
                             <div className="text-slate-900 font-sans p-1">
                                 <h3 className="font-bold text-sm mb-1">{point.location_name}</h3>
-                                <p className="text-xs">
+                                <p className="text-xs mb-1">
                                     <span className="font-semibold">Intensity:</span> {point.intensity_weight.toFixed(2)}
                                 </p>
+                                {point.has_active_alert && (
+                                    <span className="inline-block mt-1 px-2 py-0.5 bg-red-500/20 text-red-500 border border-red-500/30 rounded text-[10px] font-bold uppercase tracking-wider">
+                                        Active Alert
+                                    </span>
+                                )}
                             </div>
                         </Popup>
                     </CircleMarker>
-                ))}
+                    );
+                })}
             </MapContainer>
 
             {/* Global styles for dark mode popup override if necessary */}
@@ -74,6 +82,33 @@ const PollutionHeatmap = ({ data = [], center = [21.2514, 81.6296], zoom = 6 }) 
                 }
                 .leaflet-container {
                     background: #0b1114;
+                }
+                
+                @keyframes throb {
+                    0% {
+                        transform: scale(1);
+                        fill-opacity: 0.6;
+                        stroke-opacity: 1;
+                        stroke-width: 2px;
+                    }
+                    50% {
+                        transform: scale(1.3);
+                        fill-opacity: 0.8;
+                        stroke-opacity: 0.8;
+                        stroke-width: 4px;
+                    }
+                    100% {
+                        transform: scale(1);
+                        fill-opacity: 0.6;
+                        stroke-opacity: 1;
+                        stroke-width: 2px;
+                    }
+                }
+
+                .pulse-marker {
+                    animation: throb 1.5s infinite ease-in-out;
+                    transform-origin: center;
+                    /* In SVG transform-origin doesn't strictly work without box bounding fixes, but Leaflet centers layers */
                 }
             `}</style>
         </div>

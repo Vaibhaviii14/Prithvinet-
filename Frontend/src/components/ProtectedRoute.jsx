@@ -5,9 +5,6 @@ import { AuthContext } from '../context/AuthContext';
 const ProtectedRoute = ({ allowedRoles = [] }) => {
     const { user, loading } = useContext(AuthContext);
 
-    // TEMPORARY BYPASS FOR DEVELOPMENT: allow access without login
-    return <Outlet />;
-
     if (loading) {
         return (
             <div className="flex justify-center items-center min-h-screen bg-[#0b1114]">

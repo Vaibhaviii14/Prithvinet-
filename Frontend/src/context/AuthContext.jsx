@@ -9,13 +9,32 @@ export const AuthProvider = ({ children }) => {
 
     // Initialize from localStorage on load
     useEffect(() => {
-        const token = localStorage.getItem('access_token');
-        const role = localStorage.getItem('role');
-
-        if (token && role) {
-            setUser({ token, role });
-        }
-        setLoading(false);
+        const initializeAuth = async () => {
+            const token = localStorage.getItem('access_token');
+            const role = localStorage.getItem('role');
+            
+            if (token && role) {
+                try {
+                    // Always try to get fresh user data on load
+                    const res = await api.get('/api/auth/me', {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    localStorage.setItem('user', JSON.stringify(res.data));
+                    setUser({ token, role, ...res.data });
+                } catch (err) {
+                    console.error("Failed to fetch user session", err);
+                    // Fallback to basic auth state if network fails
+                    const storedUser = localStorage.getItem('user');
+                    if (storedUser) {
+                        setUser({ token, role, ...JSON.parse(storedUser) });
+                    } else {
+                        setUser({ token, role });
+                    }
+                }
+            }
+            setLoading(false);
+        };
+        initializeAuth();
     }, []);
 
     const login = async (username, password) => {
@@ -33,15 +52,16 @@ export const AuthProvider = ({ children }) => {
 
             const { access_token, role } = response.data;
 
-            // Since FastAPI typically just returns access_token and token_type in OAuth2 spec,
-            // it's possible role is also sent if customized.
-            // If role isn't from the backend, we might want to decode token or just use what we have.
-            // We will assume the custom response contains both access_token and user role.
-
             localStorage.setItem('access_token', access_token);
             localStorage.setItem('role', role || 'unknown');
 
-            setUser({ token: access_token, role: role || 'unknown' });
+            // Fetch full profile immediately after login
+            const userRes = await api.get('/api/auth/me', {
+                headers: { Authorization: `Bearer ${access_token}` }
+            });
+            localStorage.setItem('user', JSON.stringify(userRes.data));
+
+            setUser({ token: access_token, role: role || 'unknown', ...userRes.data });
             return { success: true };
         } catch (error) {
             console.error("Login failed:", error);

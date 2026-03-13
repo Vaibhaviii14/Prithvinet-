@@ -1,42 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { Sliders, X, CloudRain, Droplets, Volume2, Edit2 } from 'lucide-react';
+import { Activity, CheckCircle2, ShieldAlert, Sliders, Wind, Droplet, VolumeX, ListPlus, X } from 'lucide-react';
 import api from '../../api/axios';
 
-const PolicyLimits = () => {
-    const [limits, setLimits] = useState([]);
-    const [activeTab, setActiveTab] = useState('Air');
-    const [loading, setLoading] = useState(true);
-    
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [selectedLimit, setSelectedLimit] = useState(null);
-    const [editValue, setEditValue] = useState('');
-    const [toastMessage, setToastMessage] = useState(null);
+const AIR_PARAMS = ["PM10", "PM2.5", "SO2", "NO2", "CO", "O3", "NH3", "Pb", "Benzene", "BaP"];
+const WATER_PARAMS = ["pH", "BOD", "COD", "TSS", "TDS", "Oil & Grease", "Lead", "Arsenic", "Mercury"];
+const NOISE_PARAMS = ["Day Time (dB)", "Night Time (dB)"];
 
-    const triggerToast = (message) => {
-        setToastMessage(message);
-        setTimeout(() => setToastMessage(null), 3000);
-    };
+const PolicyLimits = () => {
+    const [existingLimits, setExistingLimits] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [toast, setToast] = useState(null);
+
+    // Form State
+    const [step, setStep] = useState(1);
+    const [category, setCategory] = useState('');
+    const [parameterDrop, setParameterDrop] = useState('');
+    const [customParameter, setCustomParameter] = useState('');
+    const [maxValue, setMaxValue] = useState('');
+    const [unit, setUnit] = useState('');
 
     const fetchLimits = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const headers = token ? { Authorization: `Bearer ${token}` } : {};
-            const res = await api.get('/api/master/limits', { headers });
-            
-            // Format existing DB payload here if needed
-            setLimits(res.data || []);
-        } catch (err) {
-            console.error("Failed to fetch limits, using mock data", err);
-            // Mock Data Fallback
-            setLimits([
-                { id: '1', name: 'PM2.5', max_value: 60, unit: 'µg/m³', category: 'Air' },
-                { id: '2', name: 'SO2', max_value: 80, unit: 'µg/m³', category: 'Air' },
-                { id: '3', name: 'NO2', max_value: 80, unit: 'µg/m³', category: 'Air' },
-                { id: '4', name: 'pH', max_value: 8.5, unit: 'scale', category: 'Water' },
-                { id: '5', name: 'BOD', max_value: 30, unit: 'mg/l', category: 'Water' },
-                { id: '6', name: 'Noise Day', max_value: 75, unit: 'dB', category: 'Noise' },
-                { id: '7', name: 'Noise Night', max_value: 70, unit: 'dB', category: 'Noise' },
-            ]);
+            setLoading(true);
+            const res = await api.get('/api/master/limits');
+            setExistingLimits(res.data || []);
+        } catch (error) {
+            console.error("Failed fetching master limits", error);
         } finally {
             setLoading(false);
         }
@@ -46,170 +36,297 @@ const PolicyLimits = () => {
         fetchLimits();
     }, []);
 
-    const handleEditClick = (limit) => {
-        setSelectedLimit(limit);
-        setEditValue(limit.max_value.toString());
-        setIsEditModalOpen(true);
+    // Auto-fill Logic
+    useEffect(() => {
+        if (!category) return;
+
+        const currentParam = parameterDrop === 'Other' ? customParameter.trim() : parameterDrop;
+        if (!currentParam) {
+            // Reset if they back out
+            setMaxValue('');
+            setUnit('');
+            return;
+        }
+
+        const exactMatch = existingLimits.find(
+            limit => limit.category === category && limit.parameter.toLowerCase() === currentParam.toLowerCase()
+        );
+
+        if (exactMatch) {
+            setMaxValue(exactMatch.max_allowed_value);
+            setUnit(exactMatch.unit);
+        } else {
+            // It's a true new limit, reset inputs to let them type
+            setMaxValue('');
+            setUnit('');
+        }
+    }, [parameterDrop, customParameter, category, existingLimits]);
+
+    const handleCategorySelect = (selectedCat) => {
+        setCategory(selectedCat);
+        setParameterDrop('');
+        setCustomParameter('');
+        setStep(2);
     };
 
-    const handleEditSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const token = localStorage.getItem('token');
-            const headers = token ? { Authorization: `Bearer ${token}` } : {};
-            
-            // Put request to update the limit
-            // Note: Update backend endpoint if it exists
-            await api.put(`/api/master/limits/${selectedLimit.id}`, { max_value: parseFloat(editValue) }, { headers });
-            triggerToast(`${selectedLimit.name} limit updated successfully!`);
-            
-            // Optimistic update for mock UI resilience
-            setLimits(limits.map(l => l.id === selectedLimit.id ? { ...l, max_value: parseFloat(editValue) } : l));
-            setIsEditModalOpen(false);
-            // Optionally, fetchLimits() to sync completely
-        } catch (error) {
-            console.error("Failed to update limit, using optimistic update fallback:", error);
-            // Even if it fails (because the endpoint isn't fully ready), make it look like it worked for the prototype
-            setLimits(limits.map(l => l.id === selectedLimit.id ? { ...l, max_value: parseFloat(editValue) } : l));
-            triggerToast(`${selectedLimit.name} limit updated successfully (Mock)`);
-            setIsEditModalOpen(false);
+    const handleParamSelect = (e) => {
+        const val = e.target.value;
+        setParameterDrop(val);
+        if (val !== 'Other') {
+            setStep(3);
         }
     };
 
-    const filteredLimits = limits.filter(l => l.category === activeTab);
+    const handleCustomParamChange = (e) => {
+        setCustomParameter(e.target.value);
+        if (e.target.value.trim().length > 1) {
+            setStep(3); // unlock next inputs
+        } else {
+            setStep(2);
+        }
+    };
+
+    const getDropdownOptions = () => {
+        switch (category) {
+            case 'Air': return AIR_PARAMS;
+            case 'Water': return WATER_PARAMS;
+            case 'Noise': return NOISE_PARAMS;
+            default: return [];
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        const finalParam = parameterDrop === 'Other' ? customParameter.trim() : parameterDrop;
+
+        if (!category || !finalParam || !maxValue || !unit) {
+            alert('Please complete all fields.');
+            return;
+        }
+
+        try {
+            setSubmitting(true);
+
+            const payload = {
+                category,
+                parameter: finalParam,
+                max_allowed_value: parseFloat(maxValue),
+                unit
+            };
+
+            await api.post('/api/master/limits', payload);
+
+            // Show Success
+            setToast(`Policy for ${finalParam} successfully updated!`);
+            setTimeout(() => setToast(null), 4000);
+
+            // Reset Form smoothly
+            setCategory('');
+            setParameterDrop('');
+            setCustomParameter('');
+            setMaxValue('');
+            setUnit('');
+            setStep(1);
+
+            // Refetch to populate right-side table
+            await fetchLimits();
+
+        } catch (error) {
+            console.error('Failed to upsert limit policy', error.response?.data || error);
+            alert(`Error: ${error.response?.data?.detail || 'Failed to update policy'}`);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // Grouping helper for the table
+    const groupedLimits = existingLimits.reduce((acc, limit) => {
+        if (!acc[limit.category]) acc[limit.category] = [];
+        acc[limit.category].push(limit);
+        return acc;
+    }, {});
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto relative">
-            {toastMessage && (
-                <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[200] animate-in slide-in-from-top-4 fade-in duration-300">
-                    <div className="bg-[#1a2d22] border border-emerald-500/50 text-emerald-500 px-5 py-3 rounded-xl shadow-[0_0_20px_rgba(28,203,91,0.2)] flex items-center gap-2 font-semibold">
-                        {toastMessage}
-                    </div>
+        <div className="space-y-6 max-w-7xl mx-auto pb-10 relative">
+
+            {toast && (
+                <div className="fixed top-20 right-4 lg:right-10 z-[100] bg-emerald-500 text-slate-950 px-5 py-3 rounded-lg font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(0,230,118,0.3)] animate-bounce">
+                    <CheckCircle2 className="w-5 h-5" /> {toast}
                 </div>
             )}
-            
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                    <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
-                        <Sliders className="text-emerald-500 w-8 h-8" />
-                        Prescribed Environmental Limits
-                    </h1>
-                    <p className="text-sm text-slate-400 mt-2">Manage the compliance standards thresholds for environmental parameters across regions.</p>
-                </div>
+
+            <div className="mb-8 border-b border-[#263238] pb-6">
+                <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
+                    <ShieldAlert className="text-emerald-500 w-8 h-8" />
+                    Policy & Prescribed Limits
+                </h1>
+                <p className="text-sm text-slate-400 mt-2">Globally define the automated compliance bounds for the entire state network.</p>
             </div>
 
-            {/* Toggle Tabs */}
-            <div className="bg-[#151c21] border border-[#263238] rounded-xl p-1 inline-flex mb-4 relative z-10 w-full sm:w-auto overflow-x-auto scrollbar-hide">
-                {['Air', 'Water', 'Noise'].map(tab => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm transition-all whitespace-nowrap ${
-                            activeTab === tab 
-                            ? 'bg-[#1a2d22] text-emerald-500 shadow-[0_0_10px_rgba(28,203,91,0.2)]' 
-                            : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                        }`}
-                    >
-                        {tab === 'Air' && <CloudRain className="w-4 h-4" />}
-                        {tab === 'Water' && <Droplets className="w-4 h-4" />}
-                        {tab === 'Noise' && <Volume2 className="w-4 h-4" />}
-                        {tab} Quality
-                    </button>
-                ))}
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-            {/* Data Table */}
-            <div className="bg-[#1a2327] border border-[#263238] rounded-2xl overflow-hidden shadow-lg">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-900/30 border-b border-[#263238] text-xs font-bold text-slate-400 uppercase tracking-wider">
-                                <th className="p-4 pl-6">Parameter</th>
-                                <th className="p-4">Allowed Limit</th>
-                                <th className="p-4">Unit</th>
-                                <th className="p-4 text-right pr-6">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#263238]">
-                            {loading ? (
-                                <tr>
-                                    <td colSpan="4" className="p-8 text-center text-emerald-500 animate-pulse">Loading limits...</td>
-                                </tr>
-                            ) : filteredLimits.length === 0 ? (
-                                <tr>
-                                    <td colSpan="4" className="p-8 text-center text-slate-500">No parameters found for {activeTab}.</td>
-                                </tr>
-                            ) : (
-                                filteredLimits.map((limit) => (
-                                    <tr key={limit.id} className="hover:bg-slate-800/30 transition-colors group">
-                                        <td className="p-4 pl-6 font-bold text-white text-base">
-                                            {limit.name}
-                                        </td>
-                                        <td className="p-4 text-red-400 font-extrabold text-lg">
-                                            {limit.max_value}
-                                        </td>
-                                        <td className="p-4 text-slate-400 text-sm">
-                                            {limit.unit}
-                                        </td>
-                                        <td className="p-4 text-right pr-6">
-                                            <button 
-                                                onClick={() => handleEditClick(limit)}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold bg-[#0b1114] text-slate-300 border border-[#263238] hover:border-emerald-500/50 hover:text-emerald-500 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                                            >
-                                                <Edit2 className="w-3.5 h-3.5" /> Edit Limit
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                {/* Left Column - Policy Form */}
+                <div className="space-y-6">
+                    <div className="bg-[#1a2327] border border-[#263238] rounded-2xl p-6 shadow-sm overflow-hidden relative">
+                        {loading && (
+                            <div className="absolute inset-0 bg-[#1a2327]/80 backdrop-blur-sm z-10 flex items-center justify-center">
+                                <Activity className="w-8 h-8 text-emerald-500 animate-spin" />
+                            </div>
+                        )}
 
-            {/* Edit Modal */}
-            {isEditModalOpen && selectedLimit && (
-                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                    <div className="w-full max-w-sm relative animate-in fade-in zoom-in-95 duration-200 bg-[#11181c] border border-[#263238] rounded-2xl shadow-2xl overflow-hidden">
-                        <div className="p-5 border-b border-[#263238] bg-[#151c21] flex justify-between items-center">
-                            <h3 className="text-white font-bold flex items-center gap-2 text-lg">
-                                <Edit2 className="w-4 h-4 text-emerald-500" /> Edit {selectedLimit.name} Limit
-                            </h3>
-                            <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
-                                <X className="w-5 h-5" />
+                        <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                            <Sliders className="w-5 h-5 text-emerald-500" /> Policy Configuration Ruleset
+                        </h2>
+
+                        <form onSubmit={handleSubmit} className="space-y-8">
+
+                            {/* Step 1: Category */}
+                            <div className="space-y-3">
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest">1. Select Domain Area</label>
+                                <div className="grid grid-cols-3 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleCategorySelect('Air')}
+                                        className={`py-3 flex flex-col items-center justify-center gap-2 rounded-xl border transition-all ${category === 'Air' ? 'bg-blue-500/10 border-blue-500 text-blue-400 font-bold' : 'bg-[#0b1114] border-[#263238] text-slate-400 hover:border-slate-500'}`}
+                                    >
+                                        <Wind className="w-6 h-6" /> Air
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleCategorySelect('Water')}
+                                        className={`py-3 flex flex-col items-center justify-center gap-2 rounded-xl border transition-all ${category === 'Water' ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400 font-bold' : 'bg-[#0b1114] border-[#263238] text-slate-400 hover:border-slate-500'}`}
+                                    >
+                                        <Droplet className="w-6 h-6" /> Water
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleCategorySelect('Noise')}
+                                        className={`py-3 flex flex-col items-center justify-center gap-2 rounded-xl border transition-all ${category === 'Noise' ? 'bg-purple-500/10 border-purple-500 text-purple-400 font-bold' : 'bg-[#0b1114] border-[#263238] text-slate-400 hover:border-slate-500'}`}
+                                    >
+                                        <VolumeX className="w-6 h-6" /> Noise
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Step 2: Parameter Selection */}
+                            <div className={`space-y-3 transition-opacity duration-300 ${step >= 2 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest">2. Target Parameter</label>
+                                <select
+                                    value={parameterDrop}
+                                    onChange={handleParamSelect}
+                                    className="w-full bg-[#0b1114] border border-[#263238] rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 appearance-none"
+                                >
+                                    <option value="" disabled>Select a predefined pollutant...</option>
+                                    {getDropdownOptions().map(opt => (
+                                        <option key={opt} value={opt}>{opt}</option>
+                                    ))}
+                                    <option value="Other">Other (Custom)</option>
+                                </select>
+
+                                {parameterDrop === 'Other' && (
+                                    <input
+                                        type="text"
+                                        placeholder="Type custom parameter name (e.g. Iron)"
+                                        value={customParameter}
+                                        onChange={handleCustomParamChange}
+                                        className="w-full bg-[#0b1114] border border-emerald-500/50 rounded-xl px-4 py-3 mt-2 text-sm text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 placeholder-slate-600 shadow-[0_0_10px_rgba(0,230,118,0.1)]"
+                                    />
+                                )}
+                            </div>
+
+                            {/* Step 3: Thresholds */}
+                            <div className={`space-y-4 transition-opacity duration-300 bg-[#0b1114] p-5 rounded-xl border border-[#263238] ${step >= 3 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <ListPlus className="w-4 h-4 text-emerald-500" />
+                                    <label className="text-xs font-bold text-emerald-500 uppercase tracking-widest">3. Set Strict Bounds</label>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-400 mb-1.5">Max Permissible Limit</label>
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            value={maxValue}
+                                            onChange={(e) => setMaxValue(e.target.value)}
+                                            placeholder="e.g. 60"
+                                            className="w-full bg-[#1a2327] border border-[#263238] rounded-lg px-3 py-2 text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-mono text-lg"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-400 mb-1.5">Measurement Unit</label>
+                                        <input
+                                            type="text"
+                                            value={unit}
+                                            onChange={(e) => setUnit(e.target.value)}
+                                            placeholder="e.g. µg/m³"
+                                            className="w-full bg-[#1a2327] border border-[#263238] rounded-lg px-3 py-2 text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-mono text-lg"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={submitting || step < 3 || !maxValue || !unit}
+                                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-emerald-500 hover:bg-emerald-400 text-[#0b1114] font-black rounded-xl transition-all shadow-[0_0_15px_rgba(0,230,118,0.3)] hover:shadow-[0_0_25px_rgba(0,230,118,0.5)] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed uppercase tracking-wider text-sm"
+                            >
+                                {submitting ? <Activity className="w-5 h-5 animate-spin" /> : 'Save / Update Policy Rule'}
                             </button>
-                        </div>
-                        <form onSubmit={handleEditSubmit} className="p-6">
-                            <div className="mb-6">
-                                <label className="block text-xs font-semibold text-slate-400 mb-2">New Threshold Limit ({selectedLimit.unit})</label>
-                                <input 
-                                    type="number" 
-                                    step="0.01"
-                                    required
-                                    value={editValue}
-                                    onChange={e => setEditValue(e.target.value)}
-                                    className="w-full bg-[#0b1114] border border-[#263238] rounded-xl px-4 py-3 text-white text-lg font-bold focus:outline-none focus:border-emerald-500 transition-colors"
-                                />
-                            </div>
-                            <div className="flex gap-3">
-                                <button 
-                                    type="button"
-                                    onClick={() => setIsEditModalOpen(false)}
-                                    className="flex-1 bg-[#151c21] hover:bg-[#1a2327] text-white font-bold py-3 rounded-xl border border-[#263238] transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button 
-                                    type="submit"
-                                    className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(0,230,118,0.2)] hover:shadow-[0_0_20px_rgba(0,230,118,0.4)]"
-                                >
-                                    Save Limit
-                                </button>
-                            </div>
                         </form>
                     </div>
                 </div>
-            )}
+
+                {/* Right Column - Table of rules */}
+                <div className="bg-[#1a2327] border border-[#263238] rounded-2xl shadow-sm overflow-hidden flex flex-col h-[650px]">
+                    <div className="p-5 border-b border-[#263238] bg-slate-900/30">
+                        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                            <ListPlus className="text-emerald-500 w-5 h-5" /> Active Prescribed Limits
+                        </h2>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-5">
+                        {loading ? (
+                            <div className="h-full flex items-center justify-center">
+                                <Activity className="w-8 h-8 text-emerald-500 animate-spin" />
+                            </div>
+                        ) : existingLimits.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-500">
+                                <ShieldAlert className="w-12 h-12 mb-3 opacity-30" />
+                                <p>No rules enforced yet.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                {['Air', 'Water', 'Noise'].map(cat => {
+                                    if (!groupedLimits[cat] || groupedLimits[cat].length === 0) return null;
+                                    return (
+                                        <div key={cat} className="space-y-3">
+                                            <h3 className={`font-bold text-sm tracking-widest uppercase border-b pb-2
+                                                ${cat === 'Air' ? 'text-blue-400 border-blue-500/20' :
+                                                    cat === 'Water' ? 'text-cyan-400 border-cyan-500/20' : 'text-purple-400 border-purple-500/20'}`}
+                                            >
+                                                {cat} Quality Limits
+                                            </h3>
+                                            <div className="grid grid-cols-1 gap-2">
+                                                {groupedLimits[cat].map(limit => (
+                                                    <div key={limit.id} className="bg-[#0b1114] border border-[#263238] rounded-lg p-3 flex justify-between items-center hover:bg-white/5 transition-colors">
+                                                        <span className="font-bold text-slate-300 text-sm">{limit.parameter}</span>
+                                                        <div className="font-mono text-sm">
+                                                            <span className="text-red-400 font-bold">{limit.max_allowed_value}</span>
+                                                            <span className="text-slate-500 ml-1">{limit.unit}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+            </div>
         </div>
     );
 };

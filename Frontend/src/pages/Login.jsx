@@ -27,7 +27,7 @@ const Login = () => {
             if (selectedRole === 'super_admin') navigate('/admin-dashboard');
             else if (selectedRole === 'ro') navigate('/ro-dashboard');
             else if (selectedRole === 'monitoring_team') navigate('/monitoring-dashboard');
-            else if (selectedRole === 'industry') navigate('/industry-dashboard');
+            else if (selectedRole === 'industry') navigate('/industry');
             else navigate('/');
         } else {
             setError(result.error || 'Failed to login. Please check your credentials.');
