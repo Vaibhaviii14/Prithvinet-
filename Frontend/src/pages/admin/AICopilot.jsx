@@ -1,39 +1,105 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Sparkles, BrainCircuit, Activity, ChevronRight, Zap } from 'lucide-react';
+import { Sparkles, BrainCircuit, Activity, ChevronRight, Zap, MapPin, Factory } from 'lucide-react';
 
-// Dummy 72-hour forecast data
-const forecastData = Array.from({ length: 24 }).map((_, i) => {
-    // Generated slightly random increasing/decreasing line
-    const point = 50 + (i * 2) + Math.sin(i) * 10;
-    return {
-        time: `${i * 3}h`,
-        point: Math.round(point),
-        upper: Math.round(point + 20),
-        lower: Math.max(0, Math.round(point - 15)),
-    };
-});
+// Dummy 72-hour forecast data is removed; using dynamic state from Backend
 
 const AICopilot = () => {
     const [prompt, setPrompt] = useState('');
     const [isSimulating, setIsSimulating] = useState(false);
     const [result, setResult] = useState(null);
+    const [chartData, setChartData] = useState([]);
+    const [scopeType, setScopeType] = useState('industry');
+    const [scopeId, setScopeId] = useState('');
+    const [availableEntities, setAvailableEntities] = useState([]);
 
-    const handleSimulation = (e) => {
+    useEffect(() => {
+        const fetchEntities = async () => {
+            try {
+                const token = localStorage.getItem('access_token');
+                const authHeaders = { 
+                    'Authorization': `Bearer ${token}`, 
+                    'Content-Type': 'application/json' 
+                };
+
+                let endpoint = '';
+                if (scopeType === 'industry') {
+                    endpoint = 'http://localhost:8000/api/master/industries';
+                } else if (scopeType === 'region') {
+                    endpoint = 'http://localhost:8000/api/master/regional-offices';
+                }
+
+                if (endpoint) {
+                    const response = await fetch(endpoint, {
+                        headers: authHeaders
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Endpoint returned status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Master payload is already {id: 'string', name: 'string', ...}
+                    setAvailableEntities(data);
+                    
+                    if (data && data.length > 0) {
+                        setScopeId(data[0].id || data[0]._id);
+                    } else {
+                        setScopeId('');
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch entities:", error);
+                setAvailableEntities([]);
+                setScopeId('');
+            }
+        };
+
+        fetchEntities();
+    }, [scopeType]);
+
+    const handleSimulation = async (e) => {
         e.preventDefault();
         if (!prompt) return;
 
         setIsSimulating(true);
-        // Fake simulation delay
-        setTimeout(() => {
+        try {
+            const response = await fetch('http://localhost:8000/api/copilot/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    query: prompt,
+                    scope_type: scopeType,
+                    scope_id: scopeId
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Simulation failed. Server responded with an error.');
+            }
+
+            const data = await response.json();
+            
             setResult({
                 status: 'success',
-                message: 'Scenario computed successfully.',
-                impact: '-14% Regional AQI',
-                insight: 'This intervention would primarily benefit the northern residential sector, preventing 2 forecasted threshold breaches in the next 48 hours.'
+                impact: data.impact,
+                insight: data.insight
             });
+            setChartData(data.chartData || []);
+        } catch (error) {
+            console.error('Simulation Error:', error);
+            setResult({
+                status: 'error',
+                impact: 'Error',
+                insight: 'Failed to generate scenario simulation due to a server connection issue.'
+            });
+            setChartData([]);
+        } finally {
             setIsSimulating(false);
-        }, 1500);
+        }
     };
 
     return (
@@ -67,7 +133,7 @@ const AICopilot = () => {
 
                 <div className="h-[300px] w-full relative z-10">
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={forecastData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <defs>
                                 <linearGradient id="colorUpper" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="#00E676" stopOpacity={0.1} />
@@ -104,28 +170,59 @@ const AICopilot = () => {
                 </div>
 
                 <div className="p-6">
-                    <form onSubmit={handleSimulation} className="flex gap-4">
-                        <div className="flex-1 relative">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <ChevronRight className="h-5 w-5 text-emerald-500" />
+                        <form onSubmit={handleSimulation} className="flex flex-col gap-4">
+                            <div className="flex items-center gap-4 mb-2">
+                                <div className="p-3 bg-slate-900 border border-[#263238] rounded-xl flex items-center justify-center">
+                                    {scopeType === 'industry' ? (
+                                        <Factory className="text-emerald-500 w-5 h-5" />
+                                    ) : (
+                                        <MapPin className="text-emerald-500 w-5 h-5" />
+                                    )}
+                                </div>
+                                
+                                <select 
+                                    value={scopeType}
+                                    onChange={(e) => setScopeType(e.target.value)}
+                                    className="bg-[#0b1114] border border-[#263238] rounded-xl text-white px-4 py-3 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-sm flex-shrink-0"
+                                >
+                                    <option value="industry">Target Industry</option>
+                                    <option value="region">Target Region</option>
+                                </select>
+
+                                <select 
+                                    value={scopeId}
+                                    onChange={(e) => setScopeId(e.target.value)}
+                                    className="bg-[#0b1114] border border-[#263238] rounded-xl text-white px-4 py-3 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-sm flex-1"
+                                >
+                                    {availableEntities.map(entity => (
+                                        <option key={entity.id} value={entity.id}>{entity.name}</option>
+                                    ))}
+                                </select>
                             </div>
-                            <input
-                                type="text"
-                                value={prompt}
-                                onChange={(e) => setPrompt(e.target.value)}
-                                placeholder="e.g., If industry X reduces emissions by 30%, what is the expected change in regional risk?"
-                                className="block w-full pl-11 pr-4 py-4 bg-[#0b1114] border border-[#263238] rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-sm shadow-inner"
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            disabled={!prompt || isSimulating}
-                            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-4 px-8 rounded-xl transition-all shadow-[0_0_20px_rgba(0,230,118,0.2)] hover:shadow-[0_0_25px_rgba(0,230,118,0.4)] disabled:opacity-50 disabled:cursor-not-allowed flex flex-shrink-0 items-center gap-2"
-                        >
-                            {isSimulating ? 'Simulating...' : 'Simulate Intervention'}
-                            {!isSimulating && <Zap className="w-5 h-5" />}
-                        </button>
-                    </form>
+                            
+                            <div className="flex gap-4">
+                                <div className="flex-1 relative">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <ChevronRight className="h-5 w-5 text-emerald-500" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={prompt}
+                                        onChange={(e) => setPrompt(e.target.value)}
+                                        placeholder="e.g., If industry X reduces emissions by 30%, what is the expected change in regional risk?"
+                                        className="block w-full pl-11 pr-4 py-4 bg-[#0b1114] border border-[#263238] rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-sm shadow-inner"
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={!prompt || isSimulating}
+                                    className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-4 px-8 rounded-xl transition-all shadow-[0_0_20px_rgba(0,230,118,0.2)] hover:shadow-[0_0_25px_rgba(0,230,118,0.4)] disabled:opacity-50 disabled:cursor-not-allowed flex flex-shrink-0 items-center gap-2"
+                                >
+                                    {isSimulating ? 'Simulating...' : 'Simulate Intervention'}
+                                    {!isSimulating && <Zap className="w-5 h-5" />}
+                                </button>
+                            </div>
+                        </form>
 
                     {/* Result Card */}
                     <div className={`mt-6 rounded-xl border p-6 transition-all duration-500 ${result ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-[#0b1114] border-[#263238] border-dashed'}`}>

@@ -16,3 +16,6 @@ websockets>=12.0
 
 # NO numpy/pandas/scikit-learn YET - add later with conda
 # Replace with simple dicts for hackathon MVP
+
+# LLM integration
+google-generativeai>=0.8.3

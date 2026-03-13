@@ -5,7 +5,6 @@ from fastapi import FastAPI, Form
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime
-from app.routers import ingestion
 
 # Load .env
 load_dotenv()
@@ -15,17 +14,18 @@ app = FastAPI(title="PrithviNet API 🚀")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], # Add frontend origins
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 from app.database import db
 from app.routes import auth
-try:
-    from app.routers import master, ingestion, alerts, reports, forecast, copilot
-except ImportError:
-    from app.routes import master, ingestion, alerts, reports, forecast, copilot
+
+# Note: Removed the try/except block. It is best practice to have a strict 
+# folder structure. Assuming they are all in routers as discussed previously.
+from app.routers import master, ingestion, alerts, reports, forecast, copilot
 
 app.include_router(auth.router)
 app.include_router(master.router)
@@ -34,12 +34,13 @@ app.include_router(alerts.router)
 app.include_router(reports.router)
 app.include_router(forecast.router)
 app.include_router(copilot.router)
-# Collections
-readings = db.readings
-alerts = db.alerts
-limits = db.prescribed_limits
-parameters = db.parameters
-locations = db.monitoring_locations
+
+# FIX: Renamed collection variables to avoid namespace collision with routers
+readings_collection = db.readings
+alerts_collection = db.alerts
+limits_collection = db.prescribed_limits
+parameters_collection = db.parameters
+locations_collection = db.monitoring_locations
 
 @app.get("/")
 async def root():
@@ -47,20 +48,20 @@ async def root():
 
 @app.post("/seed")
 async def seed_data():
-    # Clear old data
-    await readings.delete_many({})
-    await alerts.delete_many({})
+    # Clear old data using the renamed variables
+    await readings_collection.delete_many({})
+    await alerts_collection.delete_many({})
     
     # Seed limits
-    await limits.delete_many({})
-    await limits.insert_many([
+    await limits_collection.delete_many({})
+    await limits_collection.insert_many([
         {"parameter_id": 1, "max_value": 80, "name": "SO2"},
         {"parameter_id": 2, "max_value": 60, "name": "PM2.5"},
         {"parameter_id": 3, "max_value": 75, "name": "Noise"}
     ])
     
     # Seed locations
-    await locations.insert_many([
+    await locations_collection.insert_many([
         {"id": 1, "name": "SteelPlant-01", "lat": 23.2599, "lon": 77.4126},
         {"id": 2, "name": "CementFactory-02", "lat": 23.2599, "lon": 77.4126}
     ])
@@ -82,10 +83,10 @@ async def create_reading(
         "source": source,
         "timestamp": datetime.utcnow()
     }
-    result = await readings.insert_one(reading_doc)
+    result = await readings_collection.insert_one(reading_doc)
     
     # Check limits & create alert
-    limit = await limits.find_one({"parameter_id": parameter_id})
+    limit = await limits_collection.find_one({"parameter_id": parameter_id})
     alert_triggered = False
     
     if limit and value > limit["max_value"]:
@@ -100,7 +101,7 @@ async def create_reading(
             "status": "open",
             "timestamp": datetime.utcnow()
         }
-        await alerts.insert_one(alert_doc)
+        await alerts_collection.insert_one(alert_doc)
         alert_triggered = True
     
     return {
@@ -112,7 +113,7 @@ async def create_reading(
 
 @app.get("/readings/{location_id}")
 async def get_readings(location_id: int):
-    cursor = readings.find({"location_id": location_id}).sort("timestamp", -1).limit(50)
+    cursor = readings_collection.find({"location_id": location_id}).sort("timestamp", -1).limit(50)
     data = await cursor.to_list(length=50)
     for doc in data:
         doc["_id"] = str(doc["_id"])
@@ -120,7 +121,7 @@ async def get_readings(location_id: int):
 
 @app.get("/alerts")
 async def get_alerts():
-    cursor = alerts.find({}).sort("timestamp", -1).limit(20)
+    cursor = alerts_collection.find({}).sort("timestamp", -1).limit(20)
     data = await cursor.to_list(length=20)
     for doc in data:
         doc["_id"] = str(doc["_id"])
