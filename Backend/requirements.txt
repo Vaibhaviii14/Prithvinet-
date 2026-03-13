@@ -1,0 +1,18 @@
+# Core (no build issues)
+fastapi>=0.115.0
+uvicorn[standard]==0.24.0
+motor==3.3.2
+pymongo==4.6.3
+
+# Data validation
+python-multipart==0.0.6
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-dotenv==1.0.0
+email-validator>=2.0.0
+
+# Real-time / IoT Stream (Module 3)
+websockets>=12.0
+
+# NO numpy/pandas/scikit-learn YET - add later with conda
+# Replace with simple dicts for hackathon MVP

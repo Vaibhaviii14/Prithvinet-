@@ -1,0 +1,14 @@
+# MongoDB Connection
+MONGO_URI=mongodb://localhost:27017/prithvinet
+
+# Development
+DEBUG=true
+ENVIRONMENT=development
+
+# JWT Secret (fake for hackathon)
+JWT_SECRET=prithvinet-super-secret-key-2026
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+
+# API
+API_V1_STR=/api/v1
