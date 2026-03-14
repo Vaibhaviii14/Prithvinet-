@@ -218,14 +218,13 @@ async def create_limit(
     
     await db.prescribed_limits.update_one(query, update, upsert=True)
 
-    # Automatically resolve any LIMIT_MISSING alerts for this parameter
-    await db.alerts.update_many(
+    # Automatically remove any LIMIT_MISSING alerts for this parameter now that a limit is set
+    await db.alerts.delete_many(
         {
             "category": limit_data.category,
             "parameter": limit_data.parameter,
             "alert_type": "LIMIT_MISSING"
-        },
-        {"$set": {"status": "RESOLVED"}}
+        }
     )
     
     # Retrieve the document to return (updated or newly created)

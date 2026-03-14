@@ -25,16 +25,24 @@ const AdminLayout = () => {
         const fetchAlerts = async () => {
             try {
                 const res = await api.get('/api/alerts');
-                const missingLimits = res.data.filter(a => a.alert_type === 'LIMIT_MISSING').length;
+                const missingLimits = res.data.filter(a => a.alert_type === 'LIMIT_MISSING' && a.status === 'UNRESOLVED').length;
                 setAlertCount(missingLimits);
             } catch (err) {
                 console.error("Failed to fetch alerts in layout", err);
             }
         };
         fetchAlerts();
+        
+        // Listen for immediate updates from children
+        const handleUpdate = () => fetchAlerts();
+        window.addEventListener('policyUpdated', handleUpdate);
+
         // Check every 30 seconds
         const interval = setInterval(fetchAlerts, 30000);
-        return () => clearInterval(interval);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('policyUpdated', handleUpdate);
+        };
     }, []);
 
     const navItems = [

@@ -36,11 +36,17 @@ const PolicyLimits = () => {
             const discovery = { Air: [], Water: [], Noise: [] };
             
             customFromAlerts.forEach(alert => {
-                if (alert.category && alert.parameter && !discovery[alert.category].includes(alert.parameter)) {
+                const alreadyInLimits = limitsRes.data.some(l => l.category === alert.category && l.parameter === alert.parameter);
+                const alreadyFound = discovery[alert.category].some(item => item.parameter === alert.parameter);
+                
+                if (alert.category && alert.parameter && !alreadyInLimits && !alreadyFound) {
                     // Only add if not already in the hardcoded list
                     const hardcoded = { Air: AIR_PARAMS, Water: WATER_PARAMS, Noise: NOISE_PARAMS }[alert.category];
                     if (!hardcoded.includes(alert.parameter)) {
-                        discovery[alert.category].push(alert.parameter);
+                        discovery[alert.category].push({
+                            parameter: alert.parameter,
+                            unit: alert.unit
+                        });
                     }
                 }
             });
@@ -92,12 +98,17 @@ const PolicyLimits = () => {
             setUnit(exactMatch.unit);
         } else {
             // Check discovered units
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('parameter') === currentParam && urlParams.get('unit')) {
-                setUnit(urlParams.get('unit'));
+            const discoveredUnit = (discoveredParams[category] || []).find(p => p.parameter === currentParam)?.unit;
+            if (discoveredUnit) {
+                setUnit(discoveredUnit);
             } else {
-                setMaxValue('');
-                setUnit('');
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('parameter') === currentParam && urlParams.get('unit')) {
+                    setUnit(urlParams.get('unit'));
+                } else {
+                    setMaxValue('');
+                    setUnit('');
+                }
             }
         }
     }, [parameterDrop, customParameter, category, existingLimits]);
@@ -127,7 +138,7 @@ const PolicyLimits = () => {
     };
 
     const getDropdownOptions = () => {
-        const discovered = discoveredParams[category] || [];
+        const discovered = (discoveredParams[category] || []).map(p => p.parameter);
         switch (category) {
             case 'Air': return [...AIR_PARAMS, ...discovered];
             case 'Water': return [...WATER_PARAMS, ...discovered];
@@ -161,6 +172,9 @@ const PolicyLimits = () => {
             // Show Success
             setToast(`Policy for ${finalParam} successfully updated!`);
             setTimeout(() => setToast(null), 4000);
+
+            // Trigger Sidebar update
+            window.dispatchEvent(new CustomEvent('policyUpdated'));
 
             // Reset Form smoothly
             setCategory('');
@@ -338,14 +352,15 @@ const PolicyLimits = () => {
                                                     <ShieldAlert className="w-5 h-5 text-red-500" />
                                                 </div>
                                                 <div>
-                                                    <h4 className="text-sm font-bold text-white">Missing Policy: {p}</h4>
-                                                    <p className="text-[10px] text-red-400 uppercase font-black">{cat} Segment</p>
+                                                    <h4 className="text-sm font-bold text-white">Missing Policy: {p.parameter}</h4>
+                                                    <p className="text-[10px] text-red-400 uppercase font-black">{cat} Segment • {p.unit || 'No Unit'}</p>
                                                 </div>
                                             </div>
                                             <button 
                                                 onClick={() => {
                                                     setCategory(cat);
-                                                    setParameterDrop(p);
+                                                    setParameterDrop(p.parameter);
+                                                    setUnit(p.unit || '');
                                                     setStep(3);
                                                 }}
                                                 className="text-[10px] bg-red-500 text-white font-bold px-3 py-1.5 rounded-lg hover:bg-red-600 transition-colors uppercase tracking-widest shadow-[0_0_10px_rgba(239,68,68,0.3)]"
