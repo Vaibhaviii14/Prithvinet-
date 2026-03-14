@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from typing import List, Optional
+from app.utils.email_sender import send_html_email
 from bson import ObjectId
 
 from app.database import db
@@ -14,6 +15,9 @@ class AlertRespondRequest(BaseModel):
 
 class AlertRejectRequest(BaseModel):
     rejection_reason: str
+
+class AlertDispatchRequest(BaseModel):
+    monitoring_team_id: str
 
 router = APIRouter(prefix="/api/alerts", tags=["Alerts & Compliance"])
 
@@ -44,6 +48,8 @@ async def get_alerts(
         industries = await industries_cursor.to_list(length=None)
         region_industry_ids = [str(ind["_id"]) for ind in industries]
         query["industry_id"] = {"$in": region_industry_ids}
+    elif user_role == UserRole.MONITORING_TEAM.value:
+        query["monitoring_team_id"] = str(current_user.id)
     
     # Filter by type (air, water, noise)
     if type:
@@ -62,10 +68,11 @@ async def get_alerts(
 @router.put("/{alert_id}/resolve", response_model=AlertResponse)
 async def resolve_alert(
     alert_id: str,
-    current_user: UserResponse = Depends(RoleChecker(["ro", "super_admin"]))
+    background_tasks: BackgroundTasks,
+    current_user: UserResponse = Depends(RoleChecker(["ro", "super_admin", "monitoring_team"]))
 ):
     """
-    Allows an RO or Super Admin to change the alert status to "RESOLVED".
+    Allows an RO, Super Admin, or Monitoring Team to change the alert status to "RESOLVED".
     """
     if not ObjectId.is_valid(alert_id):
         raise HTTPException(status_code=400, detail="Invalid Alert ID format")
@@ -95,12 +102,31 @@ async def resolve_alert(
     )
     
     updated_alert = await db.alerts.find_one({"_id": ObjectId(alert_id)})
+
+    # Fetch Industry Email 
+    industry_id = updated_alert.get("industry_id")
+    if industry_id:
+        try:
+            industry_object_id = ObjectId(industry_id) if ObjectId.is_valid(industry_id) else industry_id
+        except:
+            industry_object_id = industry_id
+        
+        industry_user = await db.users.find_one({"entity_id": str(industry_object_id)})
+        
+        if industry_user and "email" in industry_user:
+            subject = "RESOLVED: Environmental Alert Closed"
+            body = f"<p>Your environmental compliance alert tracking ID <b>{alert_id}</b> has been marked as <strong>RESOLVED</strong> by the regulatory officer.</p>"
+            background_tasks.add_task(send_html_email, industry_user["email"], subject, body)
+        else:
+            print(f"Warning: No valid industry user found for entity_id {industry_id}. No RESOLVED email sent.")
+
     return map_id(updated_alert)
 
 @router.put("/{alert_id}/respond", response_model=AlertResponse)
 async def respond_alert(
     alert_id: str,
     payload: AlertRespondRequest,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(RoleChecker(["industry"]))
 ):
     """
@@ -130,12 +156,35 @@ async def respond_alert(
     )
 
     updated_alert = await db.alerts.find_one({"_id": ObjectId(alert_id)})
+    
+    industry_id = updated_alert.get("industry_id")
+    if industry_id:
+        try:
+            industry_object_id = ObjectId(industry_id) if ObjectId.is_valid(industry_id) else industry_id
+        except:
+            industry_object_id = industry_id
+            
+        industry = await db.industries.find_one({"_id": industry_object_id})
+        if industry and "region_id" in industry:
+            region = industry["region_id"]
+            # Find RO for this region
+            ro_user = await db.users.find_one({"role": {"$in": ["ro", "RO"]}, "region_id": str(region)})
+            if ro_user and "email" in ro_user:
+                subject = "UPDATE: Corrective Action Submitted by Industry"
+                body = f"<p>An industry has submitted corrective action for Alert ID <b>{alert_id}</b>.</p><p><b>Industry Response:</b><br/>{payload.response_note}</p><p>Please log in to the portal to review and verify.</p>"
+                background_tasks.add_task(send_html_email, ro_user["email"], subject, body)
+            else:
+                print(f"Warning: No RO user found for region_id {region}. No RO email sent on industry response.")
+        else:
+             print(f"Warning: Industry has no region_id. Cannot find RO.")
+
     return map_id(updated_alert)
 
 @router.put("/{alert_id}/reject", response_model=AlertResponse)
 async def reject_alert(
     alert_id: str,
     payload: AlertRejectRequest,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(RoleChecker(["ro", "super_admin"]))
 ):
     """
@@ -175,4 +224,84 @@ async def reject_alert(
     )
     
     updated_alert = await db.alerts.find_one({"_id": ObjectId(alert_id)})
+    
+    industry_id = updated_alert.get("industry_id")
+    if industry_id:
+        try:
+            industry_object_id = ObjectId(industry_id) if ObjectId.is_valid(industry_id) else industry_id
+        except:
+            industry_object_id = industry_id
+            
+        industry_user = await db.users.find_one({"entity_id": str(industry_object_id)})
+        if industry_user and "email" in industry_user:
+            subject = "URGENT: Corrective Action Rejected by RO"
+            body = f"<p>Your recent response to Alert tracking ID <b>{alert_id}</b> has been <strong>REJECTED</strong>.</p><p><b>Officer Feedback:</b><br/>{payload.rejection_reason}</p><p>Please log into the portal to review the feedback and take appropriate action immediately.</p>"
+            background_tasks.add_task(send_html_email, industry_user["email"], subject, body)
+        else:
+            print(f"Warning: No valid industry user found for entity_id {industry_id}. No REJECTED email sent.")
+            
+    return map_id(updated_alert)
+
+@router.put("/{alert_id}/dispatch", response_model=AlertResponse)
+async def dispatch_alert(
+    alert_id: str,
+    payload: AlertDispatchRequest,
+    background_tasks: BackgroundTasks,
+    current_user: UserResponse = Depends(RoleChecker(["ro", "super_admin"]))
+):
+    """
+    Changes alert status to 'INSPECTION_PENDING' and assigns to a Monitoring Team member.
+    """
+    if not ObjectId.is_valid(alert_id):
+        raise HTTPException(status_code=400, detail="Invalid Alert ID format")
+
+    alert = await db.alerts.find_one({"_id": ObjectId(alert_id)})
+    if not alert:
+        raise HTTPException(status_code=404, detail="Alert not found")
+        
+    user_role = getattr(current_user.role, "value", current_user.role)
+    if user_role == UserRole.RO.value:
+        industry_id = alert.get("industry_id")
+        if industry_id:
+            try:
+                industry_object_id = ObjectId(industry_id) if ObjectId.is_valid(industry_id) else industry_id
+            except:
+                industry_object_id = industry_id
+                
+            industry = await db.industries.find_one({"_id": industry_object_id})
+            if not industry or industry.get("region_id") != current_user.region_id:
+                raise HTTPException(status_code=403, detail="Not authorized to dispatch alerts for this industry")
+
+    # verify monitoring team member
+    try:
+        mt_object_id = ObjectId(payload.monitoring_team_id) if ObjectId.is_valid(payload.monitoring_team_id) else payload.monitoring_team_id
+    except:
+        mt_object_id = payload.monitoring_team_id
+        
+    mt_member = await db.users.find_one({"_id": mt_object_id, "role": {"$in": ["monitoring_team", "MONITORING_TEAM"]}})
+    if not mt_member:
+        # Also check by ID cast to string just in case
+        mt_member = await db.users.find_one({"id": str(payload.monitoring_team_id), "role": {"$in": ["monitoring_team", "MONITORING_TEAM"]}})
+        if not mt_member:
+            raise HTTPException(status_code=404, detail="Monitoring Team member not found")
+
+    # Update alert
+    await db.alerts.update_one(
+        {"_id": ObjectId(alert_id)},
+        {
+            "$set": {
+                "status": "INSPECTION_PENDING",
+                "monitoring_team_id": str(payload.monitoring_team_id)
+            }
+        }
+    )
+    
+    updated_alert = await db.alerts.find_one({"_id": ObjectId(alert_id)})
+    
+    # Send email to Monitoring Team
+    if mt_member and "email" in mt_member:
+        subject = "NEW AUDIT DISPATCH: Physical Inspection Required"
+        body = f"<p>You have been dispatched to perform a physical site audit for Alert ID <b>{alert_id}</b>.</p><p>Please log into your Inspector Dashboard for location details and to submit your findings.</p>"
+        background_tasks.add_task(send_html_email, mt_member["email"], subject, body)
+        
     return map_id(updated_alert)

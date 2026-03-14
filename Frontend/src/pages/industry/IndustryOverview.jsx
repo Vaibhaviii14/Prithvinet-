@@ -43,7 +43,7 @@ const IndustryOverview = () => {
 
             // Fetch Alerts
             const alertsRes = await api.get('/api/alerts');
-            const myAlerts = alertsRes.data.filter(a => ['UNRESOLVED', 'ACTION_TAKEN'].includes(a.status));
+            const myAlerts = alertsRes.data.filter(a => ['UNRESOLVED', 'ACTION_TAKEN', 'INSPECTION_PENDING'].includes(a.status));
             setAlerts(myAlerts);
             
             // Calculate Real Compliance Percentage
@@ -72,7 +72,7 @@ const IndustryOverview = () => {
             }
 
             const hasUnresolved = myAlerts.some(a => a.status === 'UNRESOLVED');
-            const hasActionTaken = myAlerts.some(a => a.status === 'ACTION_TAKEN');
+            const hasActionTaken = myAlerts.some(a => a.status === 'ACTION_TAKEN' || a.status === 'INSPECTION_PENDING');
             
             let statusText = "Excellent Standing";
             let colorCls = "text-emerald-500";
@@ -259,6 +259,15 @@ const IndustryOverview = () => {
                                                     <MessageSquare className="w-4 h-4" /> Respond to Alert
                                                 </button>
                                             </>
+                                        ) : alert.status === 'INSPECTION_PENDING' ? (
+                                            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                                                <h5 className="text-[11px] font-bold text-blue-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                                    <Activity className="w-4 h-4" /> Physical Inspection Dispatched
+                                                </h5>
+                                                <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                                                    Notice: A physical site inspection has been initiated by the Regional Office. Please cooperate with the monitoring team when they arrive at your facility.
+                                                </p>
+                                            </div>
                                         ) : (
                                             <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
                                                 <p className="text-[10px] font-bold text-yellow-500 uppercase tracking-wider mb-1">Pending RO Verification</p>

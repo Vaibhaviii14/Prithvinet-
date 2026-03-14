@@ -24,15 +24,15 @@ class CopilotResponse(BaseModel):
     chartData: List[dict]
 
 # Initialize Groq Client
-api_key = os.getenv("GROQ_API_KEY")
-if not api_key:
+api_key = os.getenv("GROQ_API_KEY", "dummy_key_to_allow_app_startup")
+if api_key == "dummy_key_to_allow_app_startup":
     logger.warning("GROQ_API_KEY not found in environment variables.")
 
 # Create the async client
 client = AsyncGroq(api_key=api_key)
 
 async def extract_intent(query: str) -> dict:
-    if not api_key:
+    if api_key == "dummy_key_to_allow_app_startup":
         raise ValueError("GROQ_API_KEY is not set in the environment.")
 
     prompt = f"""

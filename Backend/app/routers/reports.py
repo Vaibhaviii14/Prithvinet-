@@ -134,7 +134,7 @@ async def get_map_data(
                         "$expr": {
                             "$and": [
                                 { "$eq": ["$location_id", "$$loc_id"] },
-                                { "$in": ["$status", ["UNRESOLVED", "ACTION_TAKEN"]] }
+                                { "$in": ["$status", ["UNRESOLVED", "ACTION_TAKEN", "INSPECTION_PENDING"]] }
                             ]
                         }
                     }}
@@ -150,9 +150,15 @@ async def get_map_data(
                         "then": "UNRESOLVED",
                         "else": {
                             "$cond": {
-                                "if": { "$in": ["ACTION_TAKEN", "$active_alerts.status"] },
-                                "then": "ACTION_TAKEN",
-                                "else": "NORMAL"
+                                "if": { "$in": ["INSPECTION_PENDING", "$active_alerts.status"] },
+                                "then": "INSPECTION_PENDING",
+                                "else": {
+                                    "$cond": {
+                                        "if": { "$in": ["ACTION_TAKEN", "$active_alerts.status"] },
+                                        "then": "ACTION_TAKEN",
+                                        "else": "NORMAL"
+                                    }
+                                }
                             }
                         }
                     }

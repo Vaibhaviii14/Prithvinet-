@@ -10,21 +10,24 @@ const createStatusIcon = (status) => {
     if (status === "UNRESOLVED") {
         baseClass += " bg-red-500 absolute top-0 left-0";
         pingClass = `<div class="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping"></div>`;
+    } else if (status === "INSPECTION_PENDING") {
+        baseClass += " bg-blue-500 absolute top-0 left-0";
+        pingClass = `<div class="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping"></div>`;
     } else if (status === "ACTION_TAKEN") {
         baseClass += " bg-amber-500";
     } else {
         baseClass += " bg-emerald-500";
     }
 
-    const html = status === "UNRESOLVED" 
+    const html = (status === "UNRESOLVED" || status === "INSPECTION_PENDING")
         ? `<div class="relative h-4 w-4">${pingClass}<div class="${baseClass}"></div></div>`
         : `<div class="${baseClass}"></div>`;
 
     return L.divIcon({
         className: 'bg-transparent border-0', // Prevent Leaflet's default white square
         html: html,
-        iconSize: [16, 16],
-        iconAnchor: [8, 8],
+        iconSize: [20, 20],
+iconAnchor: [10, 10],
         popupAnchor: [0, -10]
     });
 };
@@ -35,10 +38,10 @@ const StatusMap = ({ data = [], center = [23.2599, 77.4126], zoom = 7 }) => {
     const markers = useMemo(() => {
         return data.map(loc => (
             <Marker 
-                key={loc.id} 
-                position={[loc.lat, loc.lng]} 
-                icon={createStatusIcon(loc.marker_status)}
-            >
+    key={loc.id} 
+    position={[Number(loc.lat), Number(loc.lng)]}
+    icon={createStatusIcon(loc.marker_status)}
+>
                 <Popup className="custom-popup">
                     <div className="text-slate-900 min-w-[200px] p-1 font-sans">
                         <h3 className="font-bold border-b border-slate-200 pb-2 mb-2 text-base">{loc.name}</h3>
@@ -46,6 +49,7 @@ const StatusMap = ({ data = [], center = [23.2599, 77.4126], zoom = 7 }) => {
                             <span className="text-xs font-semibold uppercase text-slate-500">Status:</span>
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                                 loc.marker_status === 'UNRESOLVED' ? 'bg-red-100 text-red-700 border border-red-200' :
+                                loc.marker_status === 'INSPECTION_PENDING' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
                                 loc.marker_status === 'ACTION_TAKEN' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
                                 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                             }`}>

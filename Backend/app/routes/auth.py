@@ -160,3 +160,22 @@ async def onboard_monitoring_team(
         region_id=member_data.get("region_id"),
         entity_id=member_data.get("entity_id")
     )
+
+@router.get("/users", response_model=list[UserResponse])
+async def get_users(role: str = None, region_id: str = None, current_user: UserResponse = Depends(get_current_active_user)):
+    query = {}
+    if role:
+        query["role"] = role
+    if region_id:
+        query["region_id"] = region_id
+        
+    cursor = db.users.find(query)
+    users = await cursor.to_list(length=100)
+    
+    # Map _id -> id
+    formatted_users = []
+    for u in users:
+        u["id"] = str(u.pop("_id"))
+        formatted_users.append(u)
+        
+    return formatted_users

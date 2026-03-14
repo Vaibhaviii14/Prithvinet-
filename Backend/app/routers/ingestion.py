@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, status, WebSocket, WebSocketDisconnect, Query
+from fastapi import APIRouter, Depends, status, WebSocket, WebSocketDisconnect, Query, BackgroundTasks
 from typing import List, Optional
+from app.utils.email_sender import send_html_email
 from datetime import datetime, timezone
 from bson import ObjectId
 
@@ -24,6 +25,7 @@ def map_id(doc: dict) -> dict:
 @router.post("/manual", response_model=PollutionLogResponse, status_code=status.HTTP_201_CREATED)
 async def create_manual_log(
     log_data: PollutionLogCreate,
+    background_tasks: BackgroundTasks,
     current_user: UserResponse = Depends(RoleChecker(["industry", "monitoring_team"]))
 ):
     """
@@ -58,6 +60,41 @@ async def create_manual_log(
                 "timestamp": datetime.now(timezone.utc)
             }
             await db.alerts.insert_one(alert_doc)
+            
+            # Add Background Tasks to Email both Industry and RO
+            industry_id = log_data.industry_id
+            if industry_id:
+                try:
+                    industry_object_id = ObjectId(industry_id) if ObjectId.is_valid(industry_id) else industry_id
+                except:
+                    industry_object_id = industry_id
+                
+                # Query 1: Find the Industry user and its region
+                industry_user = await db.users.find_one({"entity_id": str(industry_object_id)})
+                industry_details = await db.industries.find_one({"_id": industry_object_id})
+                
+                if industry_user and "email" in industry_user:
+                    industry_subject = "CRITICAL: Prescribed Emission Limit Breached"
+                    industry_body = f"<p>A critical alert has been raised for your facility.</p><p><b>Parameter:</b> {param}<br/><b>Recorded Value:</b> {value}<br/><b>Prescribed Limit:</b> {limits_map[param]}</p><p>Please log into the portal immediately to submit a corrective action plan to the regulatory dashboard.</p>"
+                    background_tasks.add_task(send_html_email, industry_user["email"], industry_subject, industry_body)
+                else:
+                    print(f"Warning: Industry user not found for entity_id {industry_id}. No industry email sent.")
+                
+                # Query 2: Find the RO responsible for this region
+                if industry_details and "region_id" in industry_details:
+                    region = industry_details["region_id"]
+                    # Accommodate various ways 'ro' might be saved in DB
+                    ro_user = await db.users.find_one({"role": {"$in": ["ro", "RO"]}, "region_id": str(region)})
+                    
+                    if ro_user and "email" in ro_user:
+                        industry_name = industry_details.get("name", "Unknown Facility")
+                        ro_subject = f"ALERT: Violation at {industry_name}"
+                        ro_body = f"<p>A critical emission limit violation has been recorded at <strong>{industry_name}</strong>.</p><p><b>Parameter:</b> {param}<br/><b>Recorded Value:</b> {value}<br/><b>Prescribed Limit:</b> {limits_map[param]}</p><p>Please log into your assigned Regional Officer dashboard to monitor the situation and review incoming corrective actions.</p>"
+                        background_tasks.add_task(send_html_email, ro_user["email"], ro_subject, ro_body)
+                    else:
+                        print(f"Warning: No RO user found for region_id {region}. No RO email sent.")
+                else:
+                    print(f"Warning: Industry has no region_id. Cannot find RO.")
 
     created_log = await db.pollution_logs.find_one({"_id": new_log.inserted_id})
     return map_id(created_log)
