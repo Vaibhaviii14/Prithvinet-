@@ -76,21 +76,28 @@ const ROOverview = () => {
 
     // The WebSocket Effect
     useEffect(() => {
-        const ws = new WebSocket('ws://localhost:8000/api/ws/alerts'); // Adjust URL/port to match environment
+        const ws = new WebSocket('ws://127.0.0.1:8000/api/ws/alerts'); // Changed to 127.0.0.1 per some environments
+        
+        ws.onopen = () => console.log("🟢 RO Dashboard: Connected to Live Alerts WebSocket");
+        
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
                 if (data.event === 'REFRESH_ALERTS') {
-                    console.log("⚡ Live Update Received! Refreshing RO Dashboard...");
-                    setRefreshTrigger(prev => prev + 1); // Trigger state change instead of stale fetch call
+                    console.log("⚡ Live Update Received! Triggering RO Dashboard Refresh...");
+                    // This forces the other useEffect to re-run and grab fresh data!
+                    setRefreshTrigger(prev => prev + 1); 
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) { console.error("WS Parse Error:", err); }
         };
-        
+
+        // Strict Mode cleanup to prevent "Closed before established" errors
         return () => {
-            if (ws.readyState === 1 || ws.readyState === WebSocket.OPEN) { ws.close(); }
+            if (ws.readyState === 1 || ws.readyState === WebSocket.OPEN) {
+                ws.close();
+            }
         };
-    }, []);
+    }, []); // <--- Empty array is crucial here
 
     const handleResolveAlert = async (alertId) => {
         try {
@@ -152,6 +159,27 @@ const ROOverview = () => {
         }
     };
 
+    // Merge live alert statuses into map locations
+    const syncedLocations = (heatmapData || []).map(loc => {
+        // Find the most severe active alert for this location
+        const activeAlert = recentAlerts.find(a => 
+            String(a.location_id) === String(loc.id) || 
+            String(a.location_id) === String(loc._id) ||
+            String(a.location_id) === String(loc.location_id)
+        );
+        
+        if (activeAlert) {
+            // Overwrite status and inject the latest parameter reading for the popup
+            return { 
+                ...loc, 
+                marker_status: activeAlert.status,
+                latest_param: activeAlert.parameter,
+                latest_value: activeAlert.exceeded_value
+            };
+        }
+        return loc;
+    });
+
     return (
         <div className="space-y-6 max-w-7xl mx-auto pb-10">
             <div className="flex justify-between items-center mb-8">
@@ -209,7 +237,7 @@ const ROOverview = () => {
                                 Loading local telemetry...
                             </div>
                         ) : (
-                            <StatusMap data={heatmapData} center={[23.2599, 77.4126]} zoom={10} />
+                            <StatusMap data={syncedLocations} center={[23.2599, 77.4126]} zoom={10} />
                         )}
                     </div>
                 </div>

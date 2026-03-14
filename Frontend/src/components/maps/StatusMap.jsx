@@ -14,9 +14,9 @@ const createStatusIcon = (status) => {
         baseClass += " bg-blue-500 absolute top-0 left-0";
         pingClass = `<div class="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping"></div>`;
     } else if (status === "ACTION_TAKEN") {
-        baseClass += " bg-amber-500";
+        baseClass += " bg-yellow-500";
     } else {
-        baseClass += " bg-emerald-500";
+        baseClass += " bg-green-500";
     }
 
     const html = (status === "UNRESOLVED" || status === "INSPECTION_PENDING")
@@ -50,14 +50,22 @@ const StatusMap = ({ data = [], center = [23.2599, 77.4126], zoom = 7 }) => {
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                                 loc.marker_status === 'UNRESOLVED' ? 'bg-red-100 text-red-700 border border-red-200' :
                                 loc.marker_status === 'INSPECTION_PENDING' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-                                loc.marker_status === 'ACTION_TAKEN' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
-                                'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                                loc.marker_status === 'ACTION_TAKEN' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
+                                'bg-green-100 text-green-700 border border-green-200'
                             }`}>
-                                {loc.marker_status}
+                                {loc.marker_status || 'COMPLIANT'}
                             </span>
                         </div>
                         
-                        {loc.latest_reading ? (
+                        {loc.latest_param ? (
+                            <div className="bg-slate-50 rounded p-2 border border-slate-100 text-xs">
+                                <p className="font-semibold text-slate-500 mb-1.5 uppercase text-[9px] tracking-widest">Active Breach</p>
+                                <div className="flex justify-between items-center bg-white px-1.5 py-0.5 rounded border border-slate-100">
+                                    <span className="font-medium text-slate-500">{loc.latest_param}:</span>
+                                    <span className="font-bold text-slate-700">{loc.latest_value}</span>
+                                </div>
+                            </div>
+                        ) : loc.latest_reading ? (
                             <div className="bg-slate-50 rounded p-2 border border-slate-100 text-xs">
                                 <p className="font-semibold text-slate-500 mb-1.5 uppercase text-[9px] tracking-widest">Latest Reading</p>
                                 <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">

@@ -88,6 +88,19 @@ async def process_compliance_and_alerts(log_id_str: str, log_data_dict: dict, ba
                 await db.alerts.insert_one(alert_doc)
                 await manager.broadcast({"event": "REFRESH_ALERTS"}) # LIVE SYNC BROADCAST
                 alerts_triggered.append({"type": "COMPLIANCE", "param": param, "value": value, "limit": limits_map[param]})
+            else:
+                # SPLICED: AUTO-RESOLVE LOGIC
+                # The parameter is compliant! Close any active alerts for this parameter and industry.
+                resolve_result = await db.alerts.update_many(
+                    {
+                        "industry_id": industry_id,
+                        "parameter": param,
+                        "status": {"$in": ["UNRESOLVED", "ACTION_TAKEN", "INSPECTION_PENDING"]}
+                    },
+                    {"$set": {"status": "RESOLVED", "resolved_at": datetime.now(timezone.utc)}}
+                )
+                if resolve_result.modified_count > 0:
+                    await manager.broadcast({"event": "REFRESH_ALERTS"})
         else:
             # Limit Missing Notification (Super Admin)
             alert_doc = {
