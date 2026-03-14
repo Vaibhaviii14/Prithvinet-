@@ -158,8 +158,8 @@ const IndustryOverview = () => {
             )}
 
             <div className="mb-8">
-                <h1 className="text-3xl font-extrabold text-white">Dashboard Overview</h1>
-                <p className="text-sm text-slate-400 mt-1">Manage compliance, submit logs, and track emissions.</p>
+                <h1 className="text-3xl font-black text-slate-900 dark:text-white transition-colors">Dashboard Overview</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage compliance, submit logs, and track emissions.</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -167,34 +167,34 @@ const IndustryOverview = () => {
                 {/* Left Column */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Log Submission Section */}
-                    <div className="bg-[#1a2327] border border-[#263238] rounded-2xl p-6 shadow-sm">
+                    <div className="glass-card p-6 rounded-2xl">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                             <div>
-                                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                                    <TrendingUp className="text-emerald-500 w-5 h-5" /> Data Ingestion
+                                <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <TrendingUp className="text-emerald-500 w-5 h-5 shadow-[0_0_10px_rgba(16,185,129,0.4)]" /> Data Ingestion
                                 </h2>
-                                <p className="text-sm text-slate-400 mt-1">Submit mandatory daily telemetrics.</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Submit mandatory daily telemetrics.</p>
                             </div>
                             <button 
                                 onClick={() => setIsModalOpen(true)}
-                                className="w-full sm:w-auto flex items-center justify-center gap-2 py-3 px-6 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(0,230,118,0.25)] hover:shadow-[0_0_25px_rgba(0,230,118,0.4)]"
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 py-3.5 px-6 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-[1.02] active:scale-[0.98]"
                             >
                                 <UploadCloud className="w-5 h-5" /> Upload Daily Logs
                             </button>
                         </div>
                         
                         <div className="grid grid-cols-3 gap-4">
-                            <div className="bg-[#0b1114] border border-[#263238] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-blue-500 hover:bg-blue-500/5 transition-colors">
-                                <Cloud className="w-8 h-8 text-blue-400 mb-2" />
-                                <span className="text-sm font-bold text-slate-300">Air</span>
+                            <div className="bg-slate-50 dark:bg-[#0b1114] border border-slate-200 dark:border-[#263238] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-blue-500 hover:bg-blue-500/5 transition-all group">
+                                <Cloud className="w-8 h-8 text-blue-500 dark:text-blue-400 mb-2 group-hover:scale-110 transition-transform" />
+                                <span className="text-sm font-black text-slate-700 dark:text-slate-300">Air</span>
                             </div>
-                            <div className="bg-[#0b1114] border border-[#263238] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-cyan-500 hover:bg-cyan-500/5 transition-colors">
-                                <Droplets className="w-8 h-8 text-cyan-400 mb-2" />
-                                <span className="text-sm font-bold text-slate-300">Water</span>
+                            <div className="bg-slate-50 dark:bg-[#0b1114] border border-slate-200 dark:border-[#263238] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-cyan-500 hover:bg-cyan-500/5 transition-all group">
+                                <Droplets className="w-8 h-8 text-cyan-600 dark:text-cyan-400 mb-2 group-hover:scale-110 transition-transform" />
+                                <span className="text-sm font-black text-slate-700 dark:text-slate-300">Water</span>
                             </div>
-                            <div className="bg-[#0b1114] border border-[#263238] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-purple-500 hover:bg-purple-500/5 transition-colors">
-                                <Volume2 className="w-8 h-8 text-purple-400 mb-2" />
-                                <span className="text-sm font-bold text-slate-300">Noise</span>
+                            <div className="bg-slate-50 dark:bg-[#0b1114] border border-slate-200 dark:border-[#263238] rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-purple-500 hover:bg-purple-500/5 transition-all group">
+                                <Volume2 className="w-8 h-8 text-purple-600 dark:text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
+                                <span className="text-sm font-black text-slate-700 dark:text-slate-300">Noise</span>
                             </div>
                         </div>
                     </div>
@@ -206,11 +206,11 @@ const IndustryOverview = () => {
                 {/* Right Column */}
                 <div className="space-y-6 flex flex-col">
                     {/* Compliance Ring Widget */}
-                    <div className="bg-[#1a2327] border border-[#263238] rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
-                        <h2 className="text-sm font-bold text-slate-400 tracking-widest uppercase mb-6 w-full text-left">Compliance Health</h2>
+                    <div className="glass-card p-6 flex flex-col items-center justify-center text-center">
+                        <h2 className="text-xs font-black text-slate-500 dark:text-slate-400 tracking-widest uppercase mb-6 w-full text-left transition-colors">Compliance Health</h2>
                         <div className="relative w-40 h-40 flex items-center justify-center mb-6">
                             <svg className="w-full h-full transform -rotate-90">
-                                <circle cx="80" cy="80" r="70" className="stroke-[#0b1114]" strokeWidth="12" fill="none" />
+                                <circle cx="80" cy="80" r="70" className="stroke-slate-100 dark:stroke-[#0b1114]" strokeWidth="12" fill="none" />
                                 <circle 
                                     cx="80" cy="80" r="70" 
                                     className="transition-all duration-1000 ease-in-out" 
@@ -223,17 +223,17 @@ const IndustryOverview = () => {
                                 />
                             </svg>
                             <div className="absolute flex flex-col items-center justify-center">
-                                <span className="text-4xl font-black text-white">{healthScore.score}%</span>
+                                <span className="text-4xl font-black text-slate-900 dark:text-white transition-colors">{healthScore.score}%</span>
                             </div>
                         </div>
-                        <h3 className={`text-xl font-bold ${healthScore.color}`}>{healthScore.status}</h3>
-                        <p className="text-sm text-slate-400 mt-2 px-4">Based on regulatory thresholds and pending alerts.</p>
+                        <h3 className={`text-xl font-black ${healthScore.color}`}>{healthScore.status}</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 px-4 transition-colors font-medium">Based on regulatory thresholds and pending alerts.</p>
                     </div>
 
                     {/* Alerts Panel */}
-                    <div className="bg-[#1a2327] border border-[#263238] rounded-2xl flex flex-col flex-1 min-h-[400px]">
-                        <div className="p-4 border-b border-[#263238]">
-                            <h2 className="text-sm font-bold text-slate-400 tracking-widest uppercase">Escalation Status</h2>
+                    <div className="glass-card flex flex-col flex-1 min-h-[400px]">
+                        <div className="p-4 border-b border-slate-200 dark:border-[#263238] transition-all">
+                            <h2 className="text-xs font-black text-slate-500 dark:text-slate-400 tracking-widest uppercase">Escalation Status</h2>
                         </div>
                         <div className="p-4 flex-1 overflow-y-auto space-y-4">
                             {loadingAlerts ? (
@@ -249,7 +249,7 @@ const IndustryOverview = () => {
                                     const isAnomaly = alert?.type === 'statistical_anomaly' || alert?.alert_type === 'STATISTICAL_ANOMALY';
                                     
                                     return (
-                                        <div key={alert.id} className={`bg-[#0b1114] border rounded-xl p-4 transition-colors ${isAnomaly ? 'border-amber-500/30 hover:border-amber-500/60 bg-amber-500/5' : 'border-[#263238] hover:border-slate-600'}`}>
+                                        <div key={alert.id} className={`bg-white dark:bg-[#0b1114] border rounded-xl p-4 transition-all shadow-sm ${isAnomaly ? 'border-amber-500/30 hover:border-amber-500/60 bg-amber-50/30 dark:bg-amber-500/5' : 'border-slate-100 dark:border-[#263238] hover:border-emerald-500/30'}`}>
                                             <div className="flex items-start justify-between mb-3">
                                                 <div className="flex items-center gap-2">
                                                     {isAnomaly ? (
@@ -259,19 +259,19 @@ const IndustryOverview = () => {
                                                     ) : (
                                                         <Clock className="w-5 h-5 text-yellow-500" />
                                                     )}
-                                                    <h4 className={`font-bold text-sm ${isAnomaly ? 'text-amber-500' : 'text-white'}`}>
+                                                    <h4 className={`font-black text-sm transition-colors ${isAnomaly ? 'text-amber-600 dark:text-amber-500' : 'text-slate-800 dark:text-white'}`}>
                                                         {isAnomaly ? 'Statistical Anomaly' : `${alert.parameter} Breach`}
                                                     </h4>
                                                 </div>
-                                                <span className="text-[10px] text-slate-500">{new Date(alert.timestamp).toLocaleDateString()}</span>
+                                                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">{new Date(alert.timestamp).toLocaleDateString()}</span>
                                             </div>
                                             
                                             <div className="mb-4">
-                                                <p className={`text-xs ${isAnomaly ? 'text-amber-500 font-medium' : 'text-slate-400'}`}>
+                                                <p className={`text-xs font-medium transition-colors ${isAnomaly ? 'text-amber-600 dark:text-amber-500' : 'text-slate-500 dark:text-slate-400'}`}>
                                                     {isAnomaly ? (
                                                         alert.message || "Anomaly detected in data baseline."
                                                     ) : (
-                                                        <>Recorded Limit Exceeded: <span className="text-red-400 font-bold">{alert.exceeded_value}</span></>
+                                                        <>Recorded Limit Exceeded: <span className="text-red-500 dark:text-red-400 font-black">{alert.exceeded_value}</span></>
                                                     )}
                                                 </p>
                                             </div>
@@ -325,19 +325,19 @@ const IndustryOverview = () => {
             {/* Respond Modal Inline for Overview */}
             {selectedAlert && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-                    <div className="bg-[#1a2327] border border-[#263238] rounded-2xl p-6 shadow-2xl w-full max-w-lg relative">
-                        <button onClick={() => setSelectedAlert(null)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+                    <div className="bg-white dark:bg-[#1a2327] border border-slate-200 dark:border-[#263238] rounded-2xl p-6 shadow-2xl w-full max-w-lg relative transition-all">
+                        <button onClick={() => setSelectedAlert(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
                             <X className="w-5 h-5" />
                         </button>
                         
-                        <h2 className="text-xl font-bold text-white mb-2">Submit Corrective Action</h2>
-                        <p className="text-sm text-slate-400 mb-6">Provide actions taken for the {selectedAlert.type === 'statistical_anomaly' || selectedAlert.alert_type === 'STATISTICAL_ANOMALY' ? 'statistical anomaly' : `${selectedAlert.parameter} breach`}.</p>
+                        <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2 transition-colors">Submit Corrective Action</h2>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 font-medium">Provide actions taken for the {selectedAlert.type === 'statistical_anomaly' || selectedAlert.alert_type === 'STATISTICAL_ANOMALY' ? 'statistical anomaly' : `${selectedAlert.parameter} breach`}.</p>
                         
                         <form onSubmit={handleRespond}>
                             <textarea
                                 required
                                 rows="4"
-                                className="w-full bg-[#0b1114] border border-[#263238] rounded-xl p-3 text-white focus:ring-1 focus:ring-emerald-500 resize-none mb-4"
+                                className="w-full bg-slate-50 dark:bg-[#0b1114] border border-slate-200 dark:border-[#263238] rounded-xl p-3 text-slate-900 dark:text-white focus:ring-1 focus:ring-emerald-500 resize-none mb-4 placeholder-slate-400 transition-all outline-none"
                                 value={responseNote}
                                 onChange={(e) => setResponseNote(e.target.value)}
                                 placeholder="Describe your response..."

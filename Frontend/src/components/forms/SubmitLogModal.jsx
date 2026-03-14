@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, UploadCloud, Activity, CheckCircle, Search } from 'lucide-react';
+import { Plus, X, UploadCloud, Activity, CheckCircle } from 'lucide-react';
 import api from '../../api/axios';
 
 const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
@@ -11,7 +11,7 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
 
     const [submitting, setSubmitting] = useState(false);
     const [locations, setLocations] = useState([]);
-    
+
     const getLocalDatetimeString = () => {
         const now = new Date();
         const localTz = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
@@ -30,14 +30,21 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
     useEffect(() => {
         if (isOpen) {
             setFormData(prev => ({ ...prev, timestamp: getLocalDatetimeString() }));
-            fetchLocations();
+            const userStr = localStorage.getItem('user');
+            const user = userStr ? JSON.parse(userStr) : null;
+            const filterRegion = user?.role !== 'super_admin' ? user?.region_id : null;
+            fetchLocations(null, filterRegion);
         }
     }, [isOpen]);
 
-    const fetchLocations = async () => {
+    const fetchLocations = async (industryId, regionId) => {
         try {
-            // Fetch locations from master API
-            const res = await api.get('/api/master/locations');
+            let url = '/api/master/locations';
+            const params = new URLSearchParams();
+            if (industryId) params.append('industry_id', industryId);
+            if (regionId) params.append('region_id', regionId);
+            if (params.toString()) url += `?${params.toString()}`;
+            const res = await api.get(url);
             setLocations(res.data);
         } catch (err) {
             console.error('Failed to fetch locations', err);
@@ -70,16 +77,12 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        // Clean parameters array into objects
         const paramObj = {};
         const unitObj = {};
         parameters.forEach(p => {
             if (p.key.trim() && p.value !== '') {
                 paramObj[p.key.trim()] = parseFloat(p.value);
-                if (p.unit.trim()) {
-                    unitObj[p.key.trim()] = p.unit.trim();
-                }
+                if (p.unit.trim()) unitObj[p.key.trim()] = p.unit.trim();
             }
         });
 
@@ -96,7 +99,7 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
 
             const payload = {
                 location_id: formData.location_id,
-                industry_id: industry_id,
+                industry_id,
                 category: formData.category,
                 parameters: paramObj,
                 parameter_units: unitObj,
@@ -105,15 +108,10 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
             };
 
             await api.post('/api/ingestion/manual', payload);
-            
-            // Show Success Notification
             onSuccess();
             onClose();
-            
-            // Reset state
             setParameters([{ key: '', value: '', unit: '', isCustom: false }]);
             setFormData({ ...formData, source: '' });
-            
         } catch (error) {
             console.error('Submission failed', error.response?.data || error);
             alert(`Failed to submit logs: ${error.response?.data?.detail || 'Unknown error'}`);
@@ -126,13 +124,14 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-            <div className="bg-[#1a2327] border border-[#263238] rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col relative overflow-hidden">
-                <div className="flex items-center justify-between p-5 border-b border-[#263238] bg-[#1a2327]">
-                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <div className="theme-modal rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col relative overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between p-5 border-b theme-modal-header">
+                    <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                         <UploadCloud className="text-emerald-500 w-5 h-5" />
                         Digital Log Submission
                     </h2>
-                    <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+                    <button onClick={onClose} className="hover:text-emerald-500 transition-colors" style={{ color: 'var(--text-secondary)' }}>
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -141,10 +140,10 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
                     <form id="log-form" onSubmit={handleSubmit} className="space-y-5">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Location Sensor</label>
-                                <select 
+                                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Location Sensor</label>
+                                <select
                                     required
-                                    className="w-full bg-[#0b1114] border border-[#263238] rounded-xl px-3 py-2.5 text-sm text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+                                    className="theme-input w-full rounded-xl px-3 py-2.5 text-sm"
                                     value={formData.location_id}
                                     onChange={(e) => setFormData({...formData, location_id: e.target.value})}
                                 >
@@ -155,10 +154,10 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Category</label>
-                                <select 
+                                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Category</label>
+                                <select
                                     required
-                                    className="w-full bg-[#0b1114] border border-[#263238] rounded-xl px-3 py-2.5 text-sm text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+                                    className="theme-input w-full rounded-xl px-3 py-2.5 text-sm"
                                     value={formData.category}
                                     onChange={(e) => setFormData({...formData, category: e.target.value})}
                                 >
@@ -171,58 +170,59 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Source description</label>
-                                <input 
+                                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Source Description</label>
+                                <input
                                     type="text"
                                     required
                                     placeholder="e.g. Main Boiler Exhaust"
-                                    className="w-full bg-[#0b1114] border border-[#263238] rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+                                    className="theme-input w-full rounded-xl px-3 py-2.5 text-sm"
                                     value={formData.source}
                                     onChange={(e) => setFormData({...formData, source: e.target.value})}
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">Timestamp</label>
-                                <input 
+                                <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Timestamp</label>
+                                <input
                                     type="datetime-local"
                                     required
-                                    className="w-full bg-[#0b1114] border border-[#263238] rounded-xl px-3 py-2.5 text-sm text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+                                    className="theme-input w-full rounded-xl px-3 py-2.5 text-sm"
                                     value={formData.timestamp}
                                     onChange={(e) => setFormData({...formData, timestamp: e.target.value})}
                                 />
                             </div>
                         </div>
 
-                        <div className="border border-[#263238] bg-[#0b1114] rounded-xl p-4">
+                        {/* Parameters block */}
+                        <div className="border border-black/10 dark:border-white/10 rounded-xl p-4" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
                             <div className="flex justify-between items-center mb-3">
-                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Measured Parameters</label>
+                                <label className="block text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>Measured Parameters</label>
                                 <button type="button" onClick={addParameter} className="text-xs text-emerald-500 hover:text-emerald-400 font-bold flex items-center gap-1">
                                     <Plus className="w-3 h-3" /> Add Row
                                 </button>
                             </div>
-                            
+
                             <div className="space-y-3">
                                 {parameters.map((param, i) => (
                                     <div key={i} className="flex gap-3">
                                         <div className="flex-1">
                                             {param.isCustom ? (
                                                 <div className="flex items-center gap-2">
-                                                    <input 
+                                                    <input
                                                         type="text"
                                                         required
                                                         placeholder="Custom param name..."
-                                                        className="w-full bg-[#1a2327] border border-[#263238] rounded-lg px-3 py-2 text-sm text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                                        className="theme-input w-full rounded-lg px-3 py-2 text-sm"
                                                         value={param.key}
                                                         onChange={(e) => handleParamChange(i, 'key', e.target.value)}
                                                     />
-                                                    <button type="button" onClick={() => handleParamChange(i, 'revertCustom')} className="p-1 text-slate-500 hover:text-emerald-400" title="Back to list">
+                                                    <button type="button" onClick={() => handleParamChange(i, 'revertCustom')} className="p-1 text-slate-400 hover:text-emerald-500" title="Back to list">
                                                         <X className="w-4 h-4" />
                                                     </button>
                                                 </div>
                                             ) : (
-                                                <select 
+                                                <select
                                                     required
-                                                    className="w-full bg-[#1a2327] border border-[#263238] rounded-lg px-3 py-2 text-sm text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                                    className="theme-input w-full rounded-lg px-3 py-2 text-sm"
                                                     value={param.key}
                                                     onChange={(e) => handleParamChange(i, 'key', e.target.value)}
                                                 >
@@ -235,33 +235,33 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
                                             )}
                                         </div>
                                         <div className="flex-1">
-                                            <input 
+                                            <input
                                                 type="number"
                                                 step="any"
                                                 required
                                                 placeholder="Value"
-                                                className="w-full bg-[#1a2327] border border-[#263238] rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                                className="theme-input w-full rounded-lg px-3 py-2 text-sm"
                                                 value={param.value}
                                                 onChange={(e) => handleParamChange(i, 'value', e.target.value)}
                                             />
                                         </div>
                                         {param.isCustom && (
                                             <div className="w-24">
-                                                <input 
+                                                <input
                                                     type="text"
                                                     required
-                                                    placeholder="Unit (e.g. mg/L)"
-                                                    className="w-full bg-[#1a2327] border border-emerald-500/30 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                                    placeholder="Unit"
+                                                    className="theme-input w-full rounded-lg px-3 py-2 text-sm"
                                                     value={param.unit}
                                                     onChange={(e) => handleParamChange(i, 'unit', e.target.value)}
                                                 />
                                             </div>
                                         )}
-                                        <button 
-                                            type="button" 
+                                        <button
+                                            type="button"
                                             onClick={() => removeParameter(i)}
                                             disabled={parameters.length === 1}
-                                            className="p-2 text-slate-500 hover:text-red-500 transition-colors disabled:opacity-0"
+                                            className="p-2 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-0"
                                         >
                                             <X className="w-4 h-4" />
                                         </button>
@@ -271,12 +271,14 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
                         </div>
                     </form>
                 </div>
-                
-                <div className="p-4 border-t border-[#263238] bg-[#1a2327] flex justify-end gap-3">
+
+                {/* Footer */}
+                <div className="p-4 border-t theme-modal-header flex justify-end gap-3">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-4 py-2 font-semibold text-slate-400 hover:text-white transition-colors text-sm"
+                        className="px-4 py-2 font-semibold transition-colors text-sm hover:text-emerald-500"
+                        style={{ color: 'var(--text-secondary)' }}
                     >
                         Cancel
                     </button>
@@ -284,7 +286,7 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
                         form="log-form"
                         type="submit"
                         disabled={submitting}
-                        className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-[#0b1114] font-bold rounded-lg transition-colors text-sm disabled:opacity-50 flex items-center gap-2 shadow-[0_0_10px_rgba(0,230,118,0.2)]"
+                        className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg transition-all text-sm disabled:opacity-50 flex items-center gap-2 shadow-[0_0_10px_rgba(0,230,118,0.2)]"
                     >
                         {submitting ? <Activity className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                         Submit Log

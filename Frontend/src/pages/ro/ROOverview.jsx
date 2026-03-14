@@ -184,40 +184,40 @@ const ROOverview = () => {
         <div className="space-y-6 max-w-7xl mx-auto pb-10">
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
+                    <h1 className="text-3xl font-extrabold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
                         <Grid className="text-emerald-500 w-8 h-8" />
                         Command Center
                     </h1>
-                    <p className="text-sm text-slate-400 mt-2">Live environmental status across your jurisdiction.</p>
+                    <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>Live environmental status across your jurisdiction.</p>
                 </div>
             </div>
 
             {/* KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-[#1a2327]/70 backdrop-blur-md border border-[#263238] rounded-2xl p-6 shadow-sm flex items-center justify-between">
+                <div className="glass-card glass-card-hover p-6 flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-medium text-slate-400">Total Locations</p>
-                        <p className="text-3xl font-black text-white mt-1">{stats.totalLocations}</p>
+                        <p className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Total Locations</p>
+                        <p className="text-3xl font-black mt-1" style={{ color: 'var(--text-primary)' }}>{stats.totalLocations}</p>
                     </div>
-                    <div className="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 text-emerald-500">
+                    <div className="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 text-emerald-500 neon-border">
                         <MapPin className="w-6 h-6" />
                     </div>
                 </div>
-                <div className="bg-[#1a2327]/70 backdrop-blur-md border border-[#263238] rounded-2xl p-6 shadow-sm flex items-center justify-between">
+                <div className="glass-card glass-card-hover p-6 flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-medium text-slate-400">Tracked Industries</p>
-                        <p className="text-3xl font-black text-white mt-1">{stats.totalIndustries}</p>
+                        <p className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Tracked Industries</p>
+                        <p className="text-3xl font-black mt-1" style={{ color: 'var(--text-primary)' }}>{stats.totalIndustries}</p>
                     </div>
-                    <div className="bg-blue-500/10 p-3 rounded-xl border border-blue-500/20 text-blue-500">
+                    <div className="bg-blue-500/10 p-3 rounded-xl border border-blue-500/20 text-blue-500 neon-border" style={{ borderColor: 'rgba(59, 130, 246, 0.3)' }}>
                         <Building2 className="w-6 h-6" />
                     </div>
                 </div>
-                <div className="bg-[#1a2327]/70 backdrop-blur-md border border-[#263238] rounded-2xl p-6 shadow-sm flex items-center justify-between">
+                <div className="glass-card glass-card-hover p-6 flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-medium text-slate-400">Active Alerts</p>
-                        <p className="text-3xl font-black text-white mt-1">{stats.activeAlerts}</p>
+                        <p className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Active Alerts</p>
+                        <p className="text-3xl font-black mt-1" style={{ color: 'var(--text-primary)' }}>{stats.activeAlerts}</p>
                     </div>
-                    <div className="bg-red-500/10 p-3 rounded-xl border border-red-500/20 text-red-500">
+                    <div className="bg-red-500/10 p-3 rounded-xl border border-red-500/20 text-red-500 neon-border" style={{ borderColor: 'rgba(239, 68, 68, 0.3)' }}>
                         <AlertTriangle className="w-6 h-6" />
                     </div>
                 </div>
@@ -225,28 +225,28 @@ const ROOverview = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Heatmap */}
-                <div className="lg:col-span-2 bg-[#1a2327]/70 backdrop-blur-md border border-[#263238] rounded-xl shadow-sm overflow-hidden flex flex-col h-[600px]">
-                    <div className="p-4 border-b border-[#263238] bg-slate-900/30 flex items-center justify-between">
-                        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                            <Activity className="text-emerald-500 w-5 h-5" /> Local Live Map
+                <div className="lg:col-span-2 glass-card overflow-hidden flex flex-col h-[600px]">
+                    <div className="p-4 border-b border-white/10 flex items-center justify-between" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                        <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                            <Activity className="text-emerald-500 w-5 h-5 shadow-[0_0_10px_rgba(16,185,129,0.5)]" /> Local Live Map
                         </h2>
                     </div>
-                    <div className="flex-1 w-full relative bg-[#0b1114]">
+                    <div className="flex-1 w-full relative bg-bg-tertiary">
                         {loadingMap ? (
                             <div className="absolute inset-0 flex items-center justify-center text-emerald-500 animate-pulse">
                                 Loading local telemetry...
                             </div>
                         ) : (
-                            <StatusMap data={syncedLocations} center={[23.2599, 77.4126]} zoom={10} />
+                            <StatusMap data={syncedLocations} center={[21.2787, 81.8661]} zoom={10} />
                         )}
                     </div>
                 </div>
 
                 {/* Alerts Panel */}
-                <div className="bg-[#1a2327]/70 backdrop-blur-md border border-[#263238] rounded-xl flex flex-col h-[600px]">
-                    <div className="p-4 border-b border-[#263238] bg-slate-900/30">
-                        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                            <AlertTriangle className="text-red-500 w-5 h-5" /> Pending Alerts
+                <div className="glass-card flex flex-col h-[600px]">
+                    <div className="p-4 border-b border-white/10" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+                        <h2 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                            <AlertTriangle className="text-red-500 w-5 h-5 shadow-[0_0_10px_rgba(239,68,68,0.5)]" /> Pending Alerts
                         </h2>
                     </div>
 
@@ -259,34 +259,34 @@ const ROOverview = () => {
                         )}
                         
                         {recentAlerts.map(alert => (
-                            <div 
-                                key={alert.id} 
-                                className={`bg-[#0b1114] border-l-4 p-4 rounded-lg border border-r-[#263238] border-t-[#263238] border-b-[#263238] shadow-md transition-all ${
-                                    alert.status === 'ACTION_TAKEN' ? 'border-l-yellow-500 bg-yellow-500/5' : 'border-l-red-500'
+                            <div
+                                key={alert.id}
+                                className={`glass-card border-l-4 p-4 rounded-lg shadow-md transition-all hover:border-emerald-500/30 ${
+                                    alert.status === 'ACTION_TAKEN' ? 'border-l-yellow-500' : 'border-l-red-500'
                                 }`}
                             >
                                 <div className="flex justify-between items-start mb-2">
                                     <div className="flex items-center gap-2">
-                                        <h4 className="font-bold text-white text-sm">Param: {alert.parameter}</h4>
+                                        <h4 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Param: {alert.parameter}</h4>
                                         {alert.status === 'UNRESOLVED' ? (
-                                            <span className="text-[10px] bg-red-500/20 text-red-500 px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-red-500/30">Action Needed</span>
+                                            <span className="text-[10px] bg-red-500/10 text-red-500 px-2 py-0.5 rounded font-black uppercase tracking-wider border border-red-500/20">Action Needed</span>
                                         ) : (
-                                            <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-yellow-500/30">Action Taken</span>
+                                            <span className="text-[10px] bg-yellow-500/10 text-yellow-600 px-2 py-0.5 rounded font-black uppercase tracking-wider border border-yellow-500/20">Action Taken</span>
                                         )}
                                     </div>
-                                    <span className="text-[10px] text-slate-500 font-medium whitespace-nowrap ml-2">
+                                    <span className="text-[10px] font-bold whitespace-nowrap ml-2" style={{ color: 'var(--text-secondary)' }}>
                                         {new Date(alert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
-                                
-                                <p className="text-xs text-slate-400 mb-3">
+
+                                <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>
                                     Breach reading of <span className="text-red-400 font-bold">{alert.exceeded_value}</span> (Limit: {alert.allowed_value})
                                 </p>
-                                
+
                                 {alert.status === 'ACTION_TAKEN' && alert.industry_response && (
-                                    <div className="bg-[#1a2327]/70 backdrop-blur-md rounded border border-[#263238] p-2.5 mb-3 text-xs">
-                                        <p className="font-semibold text-emerald-500 mb-1">Industry Response:</p>
-                                        <p className="text-slate-300 italic">"{alert.industry_response}"</p>
+                                    <div className="rounded border p-2.5 mb-3 text-xs" style={{ backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-accent)' }}>
+                                        <p className="font-black text-emerald-600 mb-1">Industry Response:</p>
+                                        <p className="italic font-medium" style={{ color: 'var(--text-secondary)' }}>"{alert.industry_response}"</p>
                                     </div>
                                 )}
                                 
@@ -321,28 +321,30 @@ const ROOverview = () => {
             {/* Reject Modal */}
             {selectedRejectAlert && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-                    <div className="bg-[#1a2327]/70 backdrop-blur-md border border-[#263238] rounded-2xl p-6 shadow-2xl w-full max-w-lg relative">
-                        <button onClick={() => setSelectedRejectAlert(null)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+                    <div className="theme-modal rounded-2xl p-6 shadow-2xl w-full max-w-lg relative">
+                        <button onClick={() => setSelectedRejectAlert(null)} className="absolute top-4 right-4 hover:text-emerald-500 transition-colors" style={{ color: 'var(--text-secondary)' }}>
                             <X className="w-5 h-5" />
                         </button>
-                        
-                        <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                            <AlertTriangle className="w-5 h-5 text-rose-500" /> Reject Response
+
+                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                            <AlertTriangle className="text-rose-500 w-5 h-5" /> Reject Response
                         </h2>
-                        <p className="text-sm text-slate-400 mb-6">Provide the reason for rejecting the industry's response to the {selectedRejectAlert.parameter} breach.</p>
-                        
+                        <p className="text-sm mb-6 font-medium" style={{ color: 'var(--text-secondary)' }}>
+                            Provide the reason for rejecting the industry's response to the {selectedRejectAlert.parameter} breach.
+                        </p>
+
                         <form onSubmit={handleRejectAlert}>
                             <textarea
                                 required
                                 rows="4"
-                                className="w-full bg-[#0b1114] border border-[#263238] rounded-xl p-3 text-white focus:ring-1 focus:ring-rose-500 resize-none mb-4 placeholder-slate-600"
+                                className="theme-input w-full rounded-xl p-3 resize-none mb-4"
                                 value={rejectionReason}
                                 onChange={(e) => setRejectionReason(e.target.value)}
                                 placeholder="Reason for Rejection..."
                             ></textarea>
-                            
+
                             <div className="flex justify-end gap-3">
-                                <button type="button" onClick={() => setSelectedRejectAlert(null)} className="px-4 py-2 font-semibold text-slate-400 text-sm">Cancel</button>
+                                <button type="button" onClick={() => setSelectedRejectAlert(null)} className="px-4 py-2 font-semibold text-sm" style={{ color: 'var(--text-secondary)' }}>Cancel</button>
                                 <button type="submit" disabled={submittingReject} className="px-5 py-2 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-lg text-sm flex items-center gap-2">
                                     {submittingReject ? <Activity className="w-4 h-4 animate-spin" /> : 'Confirm Reject'}
                                 </button>
@@ -355,20 +357,22 @@ const ROOverview = () => {
             {/* Dispatch Modal */}
             {dispatchModalAlert && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-                    <div className="bg-[#1a2327] border border-[#263238] rounded-2xl p-6 shadow-2xl w-full max-w-lg relative">
-                        <button onClick={() => setDispatchModalAlert(null)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+                    <div className="theme-modal rounded-2xl p-6 shadow-2xl w-full max-w-lg relative">
+                        <button onClick={() => setDispatchModalAlert(null)} className="absolute top-4 right-4 hover:text-emerald-500 transition-colors" style={{ color: 'var(--text-secondary)' }}>
                             <X className="w-5 h-5" />
                         </button>
-                        
-                        <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+
+                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                             <Users className="w-5 h-5 text-blue-500" /> Dispatch Inspector
                         </h2>
-                        <p className="text-sm text-slate-400 mb-6">Assign an active Monitoring Team member to physically inspect the facility for the {dispatchModalAlert.parameter} breach.</p>
-                        
+                        <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+                            Assign an active Monitoring Team member to physically inspect the facility for the {dispatchModalAlert.parameter} breach.
+                        </p>
+
                         <form onSubmit={handleDispatchAlert}>
                             <select
                                 required
-                                className="w-full bg-[#0b1114] border border-[#263238] rounded-xl p-3 text-white focus:ring-1 focus:ring-blue-500 mb-6"
+                                className="theme-input w-full rounded-xl p-3 mb-6"
                                 value={selectedTeamId}
                                 onChange={(e) => setSelectedTeamId(e.target.value)}
                             >
@@ -377,9 +381,9 @@ const ROOverview = () => {
                                     <option key={member.id} value={member.id}>{member.email}</option>
                                 ))}
                             </select>
-                            
+
                             <div className="flex justify-end gap-3">
-                                <button type="button" onClick={() => setDispatchModalAlert(null)} className="px-4 py-2 font-semibold text-slate-400 text-sm">Cancel</button>
+                                <button type="button" onClick={() => setDispatchModalAlert(null)} className="px-4 py-2 font-semibold text-sm" style={{ color: 'var(--text-secondary)' }}>Cancel</button>
                                 <button type="submit" disabled={submittingDispatch} className="px-5 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg text-sm flex items-center gap-2">
                                     {submittingDispatch ? <Activity className="w-4 h-4 animate-spin" /> : 'Confirm Dispatch'}
                                 </button>

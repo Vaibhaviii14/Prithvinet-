@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Bell, Wind, Activity, ShieldCheck, AlertTriangle, Home, Map as MapIcon, BarChart2, Droplets, Volume2, Info, Navigation, Leaf, Sparkles } from 'lucide-react';
+import { Menu, Bell, Wind, Activity, ShieldCheck, AlertTriangle, Home, Map as MapIcon, BarChart2, Droplets, Volume2, Info, Navigation, Leaf, Sparkles, MapPin } from 'lucide-react';
 import api from '../../api/axios';
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import bgDark from '../../assets/bg/prithvinet-bg.png';
 
 const MapUpdater = ({ center, zoom }) => {
     const map = useMap();
@@ -41,10 +42,11 @@ const colorStyles = {
 const MetricCard = ({ title, value, status, icon: Icon, colorTheme, gradientClass, delay }) => {
     const theme = colorStyles[colorTheme];
     return (
-        <div className={`relative overflow-hidden bg-slate-900/50 backdrop-blur-xl border border-slate-800 p-6 rounded-3xl transition-all duration-500 hover:shadow-2xl ${theme.shadow} hover:-translate-y-1 group animate-fade-in-up`} style={{ animationDelay: `${delay}ms` }}>
+        <div className={`relative overflow-hidden backdrop-blur-xl p-6 rounded-3xl transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 group animate-fade-in-up`}
+             style={{ animationDelay: `${delay}ms`, backgroundColor: 'var(--glass-bg)', border: '1px solid var(--border-accent)', boxShadow: 'var(--card-shadow)' }}>
             <div className={`absolute -right-10 -top-10 w-32 h-32 ${theme.bg} rounded-full blur-3xl ${theme.hoverBg} transition-all duration-500`}></div>
             <div className="flex justify-between items-start mb-4">
-                <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider">{title}</h3>
+                <h3 className="text-sm font-medium uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>{title}</h3>
                 <div className={`p-2 rounded-2xl ${theme.bg} ${theme.text} group-hover:scale-110 transition-transform duration-300`}>
                     <Icon className="w-5 h-5" />
                 </div>
@@ -52,7 +54,7 @@ const MetricCard = ({ title, value, status, icon: Icon, colorTheme, gradientClas
             <div className="flex items-baseline gap-3 mb-2">
                 <span className={`text-4xl lg:text-5xl font-bold bg-gradient-to-br ${gradientClass} text-transparent bg-clip-text tracking-tight`}>{value}</span>
             </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/50 border border-slate-700/50">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-accent)' }}>
                 <div className={`w-2 h-2 rounded-full ${theme.dot}`}></div>
                 <span className={`text-xs font-semibold ${theme.text}`}>{status}</span>
             </div>
@@ -105,12 +107,12 @@ const CitizenMap = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4">
+            <div className="min-h-screen bg-bg-primary flex flex-col items-center justify-center gap-4">
                 <div className="relative">
                     <div className="w-16 h-16 rounded-full border-4 border-emerald-500/20 animate-[spin_3s_linear_infinite]"></div>
                     <div className="w-16 h-16 rounded-full border-4 border-transparent border-t-emerald-500 animate-[spin_1.5s_linear_infinite] absolute inset-0"></div>
                 </div>
-                <p className="text-emerald-500/80 tracking-widest text-sm font-medium uppercase animate-pulse">Initializing PrithviNet</p>
+                <p className="text-emerald-500/80 tracking-widest text-sm font-bold uppercase animate-pulse">Initializing PrithviNet</p>
             </div>
         );
     }
@@ -120,7 +122,7 @@ const CitizenMap = () => {
     const { city_info, map_zones, forecast, forecast_trend_text, advisories } = dashboardData;
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200 pb-24 font-sans selection:bg-emerald-500/30 overflow-x-hidden relative">
+        <div className="min-h-screen bg-bg-primary text-text-secondary pb-24 font-sans selection:bg-emerald-500/30 overflow-x-hidden relative transition-colors duration-300">
             <style>{`
                 @keyframes fade-in-up {
                     0% { opacity: 0; transform: translateY(20px); }
@@ -149,33 +151,36 @@ const CitizenMap = () => {
                 }
             `}</style>
 
-            {/* Background Effects */}
+            {/* Background */}
             <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-900/10 rounded-full blur-[120px] mix-blend-screen"></div>
-                <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-blue-900/10 rounded-full blur-[150px] mix-blend-screen"></div>
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+                <img src={bgDark} alt="background" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-[#0b1114]/80"></div>
             </div>
 
             {/* Header */}
-            <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/60 backdrop-blur-2xl border-b border-slate-800/60 transition-all">
+            <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-2xl shadow-none"
+                    style={{ backgroundColor: 'var(--sidebar-bg)', borderBottom: '1px solid var(--sidebar-border)' }}>
                 <div className="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <button className="p-2 -ml-2 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-xl transition-all">
+                        <button className="p-2 -ml-2 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 rounded-xl transition-all">
                             <Menu className="w-5 h-5" />
                         </button>
                         <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
                                 <Leaf className="w-4 h-4 text-white" />
                             </div>
-                            <h1 className="text-lg font-bold text-white tracking-wide">
-                                Prithvi<span className="text-emerald-400">Net</span>
+                            <h1 className="text-lg font-bold tracking-wide" style={{ color: 'var(--text-primary)' }}>
+                                Prithvi<span className="text-emerald-600 dark:text-emerald-400">Net</span>
                             </h1>
                         </div>
                     </div>
-                    <button className="p-2 -mr-2 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-xl transition-all relative">
-                        <Bell className="w-5 h-5" />
-                        <span className="absolute top-2 right-2 w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_#10b981]"></span>
-                    </button>
+
+                    <div className="flex items-center gap-4">
+                        <button className="p-2 -mr-2 text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 rounded-xl transition-all relative">
+                            <Bell className="w-5 h-5" />
+                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full shadow-[0_0_8px_#ef4444]"></span>
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -184,13 +189,13 @@ const CitizenMap = () => {
                 <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 animate-fade-in-up">
                     <div>
                         <div className="flex items-center gap-3 mb-2">
-                            <h2 className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight">{city_info.city}</h2>
+                            <h2 className="text-3xl lg:text-4xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>{city_info.city}</h2>
                             <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold rounded-full tracking-widest uppercase flex items-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.15)] mt-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                 LIVE
                             </div>
                         </div>
-                        <p className="text-sm font-medium text-slate-400 flex items-center gap-2">
+                        <p className="text-sm font-semibold text-slate-400 flex items-center gap-2">
                             <Activity className="w-4 h-4 text-slate-500" />
                             Conditions as of {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
@@ -231,29 +236,29 @@ const CitizenMap = () => {
                 {/* Main Content Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-6">
                     {/* Map Section */}
-                    <div className="lg:col-span-2 bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl animate-fade-in-up flex flex-col" style={{ animationDelay: '400ms' }}>
+                    <div className="lg:col-span-2 glass-card rounded-3xl p-5 sm:p-6 shadow-2xl animate-fade-in-up flex flex-col" style={{ animationDelay: '400ms' }}>
                          <div className="flex justify-between items-center mb-5">
                              <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-500/10 rounded-xl">
-                                    <MapIcon className="w-5 h-5 text-blue-400" />
-                                </div>
-                                <h3 className="text-lg font-bold text-white tracking-tight">Geospatial Environmental Map</h3>
+                                 <div className="p-2 bg-blue-500/10 rounded-xl">
+                                     <MapIcon className="w-5 h-5 text-blue-400" />
+                                 </div>
+                                 <h3 className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">Geospatial Environmental Map</h3>
                              </div>
-                             <button className="hidden sm:flex text-xs font-medium text-slate-400 hover:text-white transition-colors items-center gap-1.5 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700/50 hover:bg-slate-700/50 group">
+                             <button className="hidden sm:flex text-xs font-bold text-slate-400 hover:text-white transition-colors items-center gap-1.5 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700/50 group">
                                  <Navigation className="w-3.5 h-3.5 group-hover:-rotate-45 transition-transform" />
                                  Recenter
                              </button>
                          </div>
-                         <div className="relative h-[380px] sm:h-[450px] w-full rounded-2xl overflow-hidden border border-slate-700/50 ring-1 ring-white/5 shadow-inner mt-auto">
+                         <div className="relative h-[380px] sm:h-[450px] w-full rounded-2xl overflow-hidden border border-slate-700/50 ring-1 ring-slate-950/5 shadow-inner mt-auto">
                             <MapContainer
-                                center={userLocation ? [userLocation.lat, userLocation.lng] : [city_info.lat || 22.7196, city_info.lng || 75.8577]}
+                                center={userLocation ? [userLocation.lat, userLocation.lng] : [city_info.lat || 21.2787, city_info.lng || 81.8661]}
                                 zoom={userLocation ? 11 : 9}
                                 zoomControl={false}
                                 className="w-full h-full z-10 bg-[#0a0f14]"
                                 style={{ filter: 'contrast(1.05) saturate(1.2)' }}
                             >
                                 <MapUpdater 
-                                    center={userLocation ? [userLocation.lat, userLocation.lng] : [city_info.lat || 22.7196, city_info.lng || 75.8577]} 
+                                    center={userLocation ? [userLocation.lat, userLocation.lng] : [city_info.lat || 21.2787, city_info.lng || 81.8661]} 
                                     zoom={userLocation ? 11 : 9} 
                                 />
                                 <TileLayer
@@ -342,15 +347,15 @@ const CitizenMap = () => {
                     {/* Right column: Forecast & Advisories */}
                     <div className="space-y-6">
                         {/* 7-Day Forecast */}
-                        <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl animate-fade-in-up" style={{ animationDelay: '500ms' }}>
+                        <div className="glass-card rounded-3xl p-5 sm:p-6 shadow-2xl animate-fade-in-up" style={{ animationDelay: '500ms' }}>
                             <div className="flex justify-between items-center mb-6">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 bg-indigo-500/10 rounded-xl">
                                         <Sparkles className="w-5 h-5 text-indigo-400" />
                                     </div>
-                                    <h3 className="text-sm font-bold text-white tracking-tight">AI AQI Forecast</h3>
+                                    <h3 className="text-sm font-black text-slate-800 dark:text-white tracking-tight uppercase">AI AQI Forecast</h3>
                                 </div>
-                                <span className="text-[9px] font-bold bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-lg tracking-widest border border-indigo-500/20">7 DAYS</span>
+                                <span className="text-[9px] font-black bg-indigo-500/10 text-indigo-400 px-2.5 py-1 rounded-lg tracking-widest border border-indigo-500/20">7 DAYS</span>
                             </div>
                             
                             <div className="h-32 mb-6 flex items-end justify-between gap-1.5 sm:gap-2">
@@ -366,18 +371,18 @@ const CitizenMap = () => {
                                     </div>
                                 ))}
                             </div>
-                            <div className="bg-slate-800/40 p-3 rounded-xl border border-slate-700/50 text-center">
-                                <p className="text-[12px] text-slate-300 leading-relaxed font-medium"><strong className="text-indigo-400 font-bold mr-1.5">Trend Prediction:</strong>{forecast_trend_text}</p>
+                            <div className="bg-slate-100 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-700/50 text-center">
+                                <p className="text-[12px] text-slate-600 dark:text-slate-300 leading-relaxed font-bold"><strong className="text-indigo-500 dark:text-indigo-400 font-extrabold mr-1.5">Trend Prediction:</strong>{forecast_trend_text}</p>
                             </div>
                         </div>
 
                         {/* Advisories Widget */}
-                        <div className="bg-gradient-to-b from-slate-900/80 to-slate-900/40 backdrop-blur-xl border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl animate-fade-in-up" style={{ animationDelay: '600ms' }}>
+                        <div className="glass-card rounded-3xl p-5 sm:p-6 shadow-2xl animate-fade-in-up" style={{ animationDelay: '600ms' }}>
                             <div className="flex items-center gap-3 mb-5">
                                 <div className="p-2 bg-amber-500/10 rounded-xl">
                                     <AlertTriangle className="w-5 h-5 text-amber-500" />
                                 </div>
-                                <h3 className="text-sm font-bold text-white tracking-tight">Public Advisories</h3>
+                                <h3 className="text-sm font-black text-slate-800 dark:text-white tracking-tight uppercase">Public Advisories</h3>
                             </div>
                             <div className="space-y-3 max-h-[190px] overflow-y-auto no-scrollbar pr-1">
                                 {advisories.map((adv, i) => (
@@ -390,8 +395,8 @@ const CitizenMap = () => {
                                                 }
                                             </div>
                                             <div>
-                                                <h4 className="text-[13px] font-bold text-white mb-1.5 tracking-wide">{adv.title}</h4>
-                                                <p className="text-[11px] text-slate-400 leading-relaxed font-medium">{adv.message}</p>
+                                                <h4 className="text-[13px] font-black text-slate-800 dark:text-white mb-1.5 tracking-wide">{adv.title}</h4>
+                                                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-bold">{adv.message}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -403,22 +408,22 @@ const CitizenMap = () => {
             </main>
 
             {/* Floating Navigation Bar */}
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-950/80 backdrop-blur-xl border border-slate-800/80 px-8 py-3.5 rounded-full flex items-center gap-8 shadow-[0_20px_40px_rgba(0,0,0,0.5)] z-50 transition-all hover:border-slate-700 group/nav">
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/90 dark:bg-slate-950/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800/80 px-8 py-3.5 rounded-full flex items-center gap-8 shadow-[0_20px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.5)] z-50 transition-all hover:border-emerald-500/30 dark:hover:border-slate-700 group/nav">
                 <button className="flex flex-col items-center gap-1 transition-all text-emerald-400 hover:scale-110">
                     <Home className="w-[20px] h-[20px] mb-0.5" />
-                    <span className="text-[8px] font-bold tracking-widest opacity-100 group-hover/nav:opacity-100 transition-opacity">HOME</span>
+                    <span className="text-[8px] font-black tracking-widest opacity-100 transition-opacity">HOME</span>
                 </button>
                 <button className="flex flex-col items-center gap-1 transition-all text-slate-500 hover:text-white hover:scale-110">
-                    <MapIcon className="w-[18px] h-[18px] mb-0.5" />
-                    <span className="text-[8px] font-bold tracking-widest opacity-70 hover:opacity-100 transition-opacity">MAP</span>
+                    <MapPin className="w-[18px] h-[18px] mb-0.5" />
+                    <span className="text-[8px] font-black tracking-widest opacity-70 hover:opacity-100 transition-opacity uppercase">MAP</span>
                 </button>
                 <button className="flex flex-col items-center gap-1 transition-all text-slate-500 hover:text-white hover:scale-110">
                     <BarChart2 className="w-[18px] h-[18px] mb-0.5" />
-                    <span className="text-[8px] font-bold tracking-widest opacity-70 hover:opacity-100 transition-opacity">TRENDS</span>
+                    <span className="text-[8px] font-black tracking-widest opacity-70 hover:opacity-100 transition-opacity">TRENDS</span>
                 </button>
                  <button className="flex flex-col items-center gap-1 transition-all text-slate-500 hover:text-white hover:scale-110">
                     <AlertTriangle className="w-[18px] h-[18px] mb-0.5" />
-                    <span className="text-[8px] font-bold tracking-widest opacity-70 hover:opacity-100 transition-opacity">ALERTS</span>
+                    <span className="text-[8px] font-black tracking-widest opacity-70 hover:opacity-100 transition-opacity">ALERTS</span>
                 </button>
             </div>
         </div>

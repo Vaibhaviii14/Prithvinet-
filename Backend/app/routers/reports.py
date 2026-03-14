@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends
-from typing import List, Dict, Any
+from fastapi import APIRouter, Depends, Query
+from typing import List, Dict, Any, Optional
+from datetime import datetime, timedelta, timezone
 
 from app.database import db
 from app.dependencies import get_current_active_user
@@ -187,3 +188,128 @@ async def get_map_data(
     
     cursor = db.monitoring_locations.aggregate(pipeline)
     return await cursor.to_list(length=None)
+
+
+@router.get("/export-debug", response_model=List[Dict[str, Any]])
+async def export_debug(
+    current_user: UserResponse = Depends(get_current_active_user),
+):
+    """
+    Debug endpoint — returns the 5 most recent pollution_logs with no filters.
+    """
+    logs = await db.pollution_logs.find({}).sort("timestamp", -1).to_list(length=5)
+    for r in logs:
+        r["id"] = str(r.pop("_id"))
+        if isinstance(r.get("timestamp"), datetime):
+            r["timestamp"] = str(r["timestamp"])
+    return logs
+
+
+@router.get("/export", response_model=List[Dict[str, Any]])
+async def export_reports(
+    category: str = Query(..., description="Pivot type: 'region' or 'industry'"),
+    target: str = Query(..., description="Region office id OR industry id depending on pivot"),
+    days: str = Query(..., description="Number of days to look back, or 'all' for no date filter"),
+    current_user: UserResponse = Depends(get_current_active_user),
+):
+    """
+    Exports pollution_logs filtered by region or industry pivot and timeframe.
+    - region pivot:   target = regional_office id → finds all industries in that
+                      region → filters logs by those industry_ids.
+    - industry pivot: target = industry id → filters logs by that industry_id directly.
+    Always returns HTTP 200 with [] when no records match.
+    """
+    from bson import ObjectId
+
+    match: Dict[str, Any] = {}
+
+    # ── Date filter ──────────────────────────────────────────────────────────
+    if days.lower() != "all":
+        try:
+            start_date = datetime.now(timezone.utc) - timedelta(days=int(days))
+            match["timestamp"] = {"$gte": start_date}
+        except ValueError:
+            pass
+
+    # ── Pivot filter ─────────────────────────────────────────────────────────
+    cat = category.lower()
+
+    if cat == "region":
+        # Resolve regional office → get all industry ids in that region
+        ro_doc = None
+        if ObjectId.is_valid(target):
+            ro_doc = await db.regional_offices.find_one({"_id": ObjectId(target)})
+        if not ro_doc:
+            ro_doc = await db.regional_offices.find_one(
+                {"name": {"$regex": target, "$options": "i"}}
+            )
+
+        region_id = str(ro_doc["_id"]) if ro_doc else target
+        industries_cursor = db.industries.find({"region_id": region_id})
+        industries = await industries_cursor.to_list(length=None)
+        industry_ids = [str(ind["_id"]) for ind in industries]
+
+        if not industry_ids:
+            return []  # no industries in this region → no logs
+
+        match["industry_id"] = {"$in": industry_ids}
+
+    elif cat == "industry":
+        # Direct industry filter
+        ind_doc = None
+        if ObjectId.is_valid(target):
+            ind_doc = await db.industries.find_one({"_id": ObjectId(target)})
+        if not ind_doc:
+            ind_doc = await db.industries.find_one(
+                {"name": {"$regex": target, "$options": "i"}}
+            )
+
+        industry_id = str(ind_doc["_id"]) if ind_doc else target
+        match["industry_id"] = industry_id
+
+    # ── Aggregation pipeline ─────────────────────────────────────────────────
+    pipeline = [
+        {"$match": match},
+        {"$sort": {"timestamp": -1}},
+        {"$lookup": {
+            "from": "monitoring_locations",
+            "let": {"loc_id": "$location_id"},
+            "pipeline": [
+                {"$match": {"$expr": {"$eq": [{"$toString": "$_id"}, "$$loc_id"]}}},
+                {"$project": {"_id": 0, "name": 1, "city": 1}}
+            ],
+            "as": "location_doc"
+        }},
+        {"$lookup": {
+            "from": "industries",
+            "let": {"ind_id": "$industry_id"},
+            "pipeline": [
+                {"$match": {"$expr": {"$eq": [{"$toString": "$_id"}, "$$ind_id"]}}},
+                {"$project": {"_id": 0, "name": 1, "industry_type": 1}}
+            ],
+            "as": "industry_doc"
+        }},
+        {"$project": {
+            "_id": 0,
+            "id":               {"$toString": "$_id"},
+            "timestamp":        {"$dateToString": {"format": "%Y-%m-%d %H:%M UTC", "date": "$timestamp"}},
+            "source":           "$source",
+            "category":         "$category",
+            "location_id":      "$location_id",
+            "location_name":    {"$ifNull": [{"$arrayElemAt": ["$location_doc.name", 0]}, "$location_id"]},
+            "industry_id":      "$industry_id",
+            "industry_name":    {"$ifNull": [{"$arrayElemAt": ["$industry_doc.name", 0]}, "$industry_id"]},
+            "industry_type":    {"$ifNull": [{"$arrayElemAt": ["$industry_doc.industry_type", 0]}, ""]},
+            "parameters":       "$parameters",
+        }},
+    ]
+
+    logs = await db.pollution_logs.aggregate(pipeline).to_list(length=1000)
+
+    # Flatten parameters dict → readable string for CSV
+    for log in logs:
+        params = log.get("parameters") or {}
+        log["parameters_summary"] = ", ".join(f"{k}: {v}" for k, v in params.items())
+        log.pop("parameters", None)
+
+    return logs

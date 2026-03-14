@@ -6,7 +6,7 @@ const OnboardTeamForm = () => {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        entity_id: '' // Storing location ID mapping to entity_id in DB
+        entity_id: ''
     });
 
     const [locations, setLocations] = useState([]);
@@ -41,7 +41,6 @@ const OnboardTeamForm = () => {
         setSuccess(false);
 
         try {
-            // Strictly match the backend expected payload layout
             const payload = {
                 email: formData.email,
                 password: formData.password,
@@ -50,19 +49,14 @@ const OnboardTeamForm = () => {
             };
 
             await api.post('/api/auth/ro/onboard-team', payload);
-            
             setSuccess(true);
-            setFormData({
-                email: '',
-                password: '',
-                entity_id: ''
-            });
+            setFormData({ email: '', password: '', entity_id: '' });
             setTimeout(() => setSuccess(false), 3000);
         } catch (err) {
             console.error("Error onboarding team:", err.response?.data || err);
             setError(
-                typeof err.response?.data?.detail === "string" 
-                    ? err.response.data.detail 
+                typeof err.response?.data?.detail === "string"
+                    ? err.response.data.detail
                     : JSON.stringify(err.response?.data?.detail) || "Failed to onboard team member."
             );
         } finally {
@@ -71,32 +65,31 @@ const OnboardTeamForm = () => {
     };
 
     return (
-        <div className="bg-[#1a2327] border border-[#263238] rounded-xl p-6 shadow-sm max-w-lg mx-auto">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+        <div className="theme-modal rounded-xl p-6 shadow-sm max-w-lg mx-auto">
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                 <Users className="w-5 h-5 text-emerald-500" /> Onboard Ground Staff
             </h2>
 
             {error && (
                 <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/50 flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                    <p className="text-sm text-red-400 max-h-24 overflow-y-auto">{error}</p>
+                    <p className="text-sm text-red-500 max-h-24 overflow-y-auto">{error}</p>
                 </div>
             )}
 
             {success && (
                 <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/50 flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                    <p className="text-sm text-emerald-400">Team member boarded successfully!</p>
+                    <p className="text-sm text-emerald-600">Team member boarded successfully!</p>
                 </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4 text-left">
-                {/* Email */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Email Address</label>
+                    <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Email Address</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Mail className="h-4 w-4 text-slate-500" />
+                            <Mail className="h-4 w-4 text-slate-400" />
                         </div>
                         <input
                             type="email"
@@ -104,18 +97,17 @@ const OnboardTeamForm = () => {
                             value={formData.email}
                             onChange={handleChange}
                             required
-                            className="w-full pl-10 pr-3 py-2 bg-[#0b1114] border border-[#263238] rounded-lg text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors placeholder-slate-600"
+                            className="theme-input w-full pl-10 pr-3 py-2 rounded-lg text-sm"
                             placeholder="staff@prithvinet.gov.in"
                         />
                     </div>
                 </div>
 
-                {/* Password */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Temporary Password</label>
+                    <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Temporary Password</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Lock className="h-4 w-4 text-slate-500" />
+                            <Lock className="h-4 w-4 text-slate-400" />
                         </div>
                         <input
                             type="password"
@@ -123,18 +115,17 @@ const OnboardTeamForm = () => {
                             value={formData.password}
                             onChange={handleChange}
                             required
-                            className="w-full pl-10 pr-3 py-2 bg-[#0b1114] border border-[#263238] rounded-lg text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors placeholder-slate-600"
+                            className="theme-input w-full pl-10 pr-3 py-2 rounded-lg text-sm"
                             placeholder="••••••••"
                         />
                     </div>
                 </div>
 
-                {/* Assigned Station mapped to entity_id */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Assign to Station</label>
+                    <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Assign to Station</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <MapPin className="h-4 w-4 text-slate-500" />
+                            <MapPin className="h-4 w-4 text-slate-400" />
                         </div>
                         <select
                             name="entity_id"
@@ -142,15 +133,13 @@ const OnboardTeamForm = () => {
                             onChange={handleChange}
                             required
                             disabled={loadingData}
-                            className="w-full pl-10 pr-10 py-2 bg-[#0b1114] border border-[#263238] rounded-lg text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors appearance-none disabled:opacity-50"
+                            className="theme-input w-full pl-10 pr-10 py-2 rounded-lg text-sm appearance-none disabled:opacity-50"
                         >
                             <option value="" disabled>
                                 {loadingData ? 'Loading stations...' : 'Select a Location'}
                             </option>
                             {locations.map((loc) => (
-                                <option key={loc.id} value={loc.id}>
-                                    {loc.name}
-                                </option>
+                                <option key={loc.id} value={loc.id}>{loc.name}</option>
                             ))}
                         </select>
                         <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -164,7 +153,7 @@ const OnboardTeamForm = () => {
                 <button
                     type="submit"
                     disabled={submitting || loadingData}
-                    className="mt-6 w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-slate-950 bg-emerald-500 hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#1a2327] focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="mt-6 w-full flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-bold text-slate-950 bg-emerald-500 hover:bg-emerald-400 shadow-[0_0_15px_rgba(0,230,118,0.2)] hover:shadow-[0_0_20px_rgba(0,230,118,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                     {submitting ? 'Onboarding Member...' : 'Register Team Member'}
                 </button>

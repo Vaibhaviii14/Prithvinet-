@@ -91,14 +91,14 @@ const UserManagement = () => {
         <div className="space-y-6">
 
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-white tracking-tight">User Management</h1>
-                <div className="text-sm text-slate-400">Account Onboarding Center</div>
+                <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight">User Management</h1>
+                <div className="text-sm text-[var(--text-secondary)]">Account Onboarding Center</div>
             </div>
 
             {/* CENTERED CARD */}
-            <div className="max-w-2xl mx-auto bg-[#1a2327] border border-[#263238] rounded-xl p-6 shadow-sm">
+            <div className="max-w-2xl mx-auto glass-card p-8 shadow-2xl">
 
-                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6 flex items-center gap-2">
                     <Users className="w-5 h-5 text-emerald-500" />
                     Onboard New User
                 </h2>
@@ -121,22 +121,18 @@ const UserManagement = () => {
 
                     {/* EMAIL */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">
-                            Email Address
-                        </label>
-
+                        <label className="block text-sm font-medium text-gray-500 mb-1">Email Address</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Mail className="h-4 w-4 text-slate-500" />
+                                <Mail className="h-4 w-4 text-gray-400" />
                             </div>
-
                             <input
                                 type="email"
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
                                 required
-                                className="w-full pl-10 pr-3 py-2 bg-[#0b1114] border border-[#263238] rounded-lg text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors placeholder-slate-600"
+                                className="theme-input w-full pl-10 pr-3 py-2.5 rounded-lg"
                                 placeholder="user@prithvinet.gov.in"
                             />
                         </div>
@@ -144,22 +140,18 @@ const UserManagement = () => {
 
                     {/* PASSWORD */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">
-                            Temporary Password
-                        </label>
-
+                        <label className="block text-sm font-medium text-gray-500 mb-1">Temporary Password</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Lock className="h-4 w-4 text-slate-500" />
+                                <Lock className="h-4 w-4 text-gray-400" />
                             </div>
-
                             <input
                                 type="password"
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
                                 required
-                                className="w-full pl-10 pr-3 py-2 bg-[#0b1114] border border-[#263238] rounded-lg text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors placeholder-slate-600"
+                                className="theme-input w-full pl-10 pr-3 py-2.5 rounded-lg"
                                 placeholder="••••••••"
                             />
                         </div>
@@ -167,21 +159,17 @@ const UserManagement = () => {
 
                     {/* ROLE */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">
-                            Account Role
-                        </label>
-
+                        <label className="block text-sm font-medium text-gray-500 mb-1">Account Role</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Shield className="h-4 w-4 text-slate-500" />
+                                <Shield className="h-4 w-4 text-gray-400" />
                             </div>
-
                             <select
                                 name="role"
                                 value={formData.role}
                                 onChange={handleChange}
                                 required
-                                className="w-full pl-10 pr-10 py-2 bg-[#0b1114] border border-[#263238] rounded-lg text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 appearance-none"
+                                className="theme-input w-full pl-10 pr-10 py-2.5 rounded-lg appearance-none"
                             >
                                 <option value="ro">Regional Officer (RO)</option>
                                 <option value="industry">Industry User</option>
@@ -191,31 +179,24 @@ const UserManagement = () => {
 
                     {/* RO DROPDOWN */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">
-                            Assign to Regional Office
-                        </label>
-
+                        <label className="block text-sm font-medium text-gray-500 mb-1">Assign to Regional Office</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Map className="h-4 w-4 text-slate-500" />
+                                <Map className="h-4 w-4 text-gray-400" />
                             </div>
-
                             <select
                                 name="region_id"
                                 value={formData.region_id}
                                 onChange={handleChange}
                                 required
                                 disabled={loadingData}
-                                className="w-full pl-10 pr-10 py-2 bg-[#0b1114] border border-[#263238] rounded-lg text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 appearance-none disabled:opacity-50"
+                                className="theme-input w-full pl-10 pr-10 py-2.5 rounded-lg appearance-none disabled:opacity-50"
                             >
                                 <option value="" disabled>
                                     {loadingData ? 'Loading ROs...' : 'Select a Regional Office'}
                                 </option>
-
                                 {roList.map((ro) => (
-                                    <option key={ro.id} value={ro.id}>
-                                        {ro.name}
-                                    </option>
+                                    <option key={ro.id} value={ro.id}>{ro.name}</option>
                                 ))}
                             </select>
                         </div>
@@ -224,41 +205,34 @@ const UserManagement = () => {
                     {/* INDUSTRY */}
                     {formData.role === 'industry' && (
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1">
-                                Assign to Industry
-                            </label>
-
+                            <label className="block text-sm font-medium text-gray-500 mb-1">Assign to Industry</label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Factory className="h-4 w-4 text-slate-500" />
+                                    <Factory className="h-4 w-4 text-gray-400" />
                                 </div>
-
                                 <select
                                     name="entity_id"
                                     value={formData.entity_id}
                                     onChange={handleChange}
                                     required
                                     disabled={loadingData}
-                                    className="w-full pl-10 pr-10 py-2 bg-[#0b1114] border border-[#263238] rounded-lg text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 appearance-none disabled:opacity-50"
+                                    className="theme-input w-full pl-10 pr-10 py-2.5 rounded-lg appearance-none disabled:opacity-50"
                                 >
                                     <option value="" disabled>
                                         {loadingData ? 'Loading Industries...' : 'Select an Industry'}
                                     </option>
-
                                     {industryList.map((ind) => (
-                                        <option key={ind.id} value={ind.id}>
-                                            {ind.name}
-                                        </option>
+                                        <option key={ind.id} value={ind.id}>{ind.name}</option>
                                     ))}
                                 </select>
                             </div>
                         </div>
                     )}
 
-                    <button
+                     <button
                         type="submit"
                         disabled={submitting || loadingData}
-                        className="mt-6 w-full flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="mt-6 w-full flex items-center justify-center py-3 px-4 rounded-xl text-sm font-bold text-slate-950 bg-emerald-500 hover:bg-emerald-400 focus:outline-none shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                         {submitting ? 'Onboarding User...' : 'Onboard User'}
                     </button>

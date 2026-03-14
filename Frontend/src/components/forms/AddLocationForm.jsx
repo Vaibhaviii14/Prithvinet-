@@ -4,7 +4,7 @@ import api from '../../api/axios';
 import { AuthContext } from '../../context/AuthContext';
 
 const AddLocationForm = () => {
-    const { user } = useContext(AuthContext); // Extract logged-in user to grab their region
+    const { user } = useContext(AuthContext);
     
     const [formData, setFormData] = useState({
         name: '',
@@ -45,34 +45,24 @@ const AddLocationForm = () => {
         setSuccess(false);
 
         try {
-            // Strict match for { "name": "string", "type": "string", "region_id": "string", "industry_id": "string", "latitude": 0, "longitude": 0 }
-            
-            if (!user?.region_id) {
-                console.warn("region_id is missing from Auth user context, providing fallback or missing string error may occur");
-            }
-
             const payload = {
                 name: formData.name,
                 type: formData.type,
-                // Automatically assign to RO's current region securely
-                region_id: user?.region_id || "unassigned", // Use string "unassigned" instead of null to bypass Pydantic string validation crash if still missing
-                // Determine if it's explicitly tied to an industry
-                industry_id: formData.industry_id === '' ? null : formData.industry_id, 
+                region_id: user?.region_id || "unassigned",
+                industry_id: formData.industry_id === '' ? null : formData.industry_id,
                 latitude: parseFloat(formData.latitude),
                 longitude: parseFloat(formData.longitude)
             };
 
             await api.post('/api/master/locations', payload);
-
             setSuccess(true);
-            // Reset form
             setFormData({ name: '', type: 'Air', industry_id: '', latitude: '', longitude: '' });
             setTimeout(() => setSuccess(false), 3000);
         } catch (err) {
             console.error("Error submitting location:", err.response?.data || err);
             setError(
-                typeof err.response?.data?.detail === "string" 
-                    ? err.response.data.detail 
+                typeof err.response?.data?.detail === "string"
+                    ? err.response.data.detail
                     : JSON.stringify(err.response?.data?.detail) || "Failed to create monitoring location."
             );
         } finally {
@@ -81,51 +71,51 @@ const AddLocationForm = () => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="bg-[#1a2327] border border-[#263238] rounded-xl p-6 shadow-sm max-w-lg mx-auto">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+        <form onSubmit={handleSubmit} className="theme-modal rounded-xl p-6 shadow-sm max-w-lg mx-auto">
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                 <MapPin className="w-5 h-5 text-emerald-500" /> New Sensor Location
             </h2>
 
             {error && (
                 <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/50 flex items-start gap-3 text-left">
                     <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                    <p className="text-sm text-red-400 max-h-24 overflow-y-auto">{error}</p>
+                    <p className="text-sm text-red-500 max-h-24 overflow-y-auto">{error}</p>
                 </div>
             )}
 
             {success && (
                 <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/50 flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                    <p className="text-sm text-emerald-400">Location added successfully!</p>
+                    <p className="text-sm text-emerald-600">Location added successfully!</p>
                 </div>
             )}
 
             <div className="space-y-4 text-left">
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Station Name</label>
+                    <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Station Name</label>
                     <input
                         type="text"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
                         required
-                        className="w-full px-3 py-2 bg-[#0b1114] border border-[#263238] rounded-lg text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors placeholder-slate-600"
+                        className="theme-input w-full px-3 py-2 rounded-lg text-sm"
                         placeholder="e.g. City Center AQI Station"
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Monitor Type</label>
+                    <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Monitor Type</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Tag className="h-4 w-4 text-slate-500" />
+                            <Tag className="h-4 w-4 text-slate-400" />
                         </div>
                         <select
                             name="type"
                             value={formData.type}
                             onChange={handleChange}
                             required
-                            className="w-full pl-10 pr-10 py-2 bg-[#0b1114] border border-[#263238] rounded-lg text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors appearance-none"
+                            className="theme-input w-full pl-10 pr-10 py-2 rounded-lg text-sm appearance-none"
                         >
                             <option value="Air">Air Quality</option>
                             <option value="Water">Water Quality</option>
@@ -140,17 +130,17 @@ const AddLocationForm = () => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Associated Industry (Optional)</label>
+                    <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Associated Industry (Optional)</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Factory className="h-4 w-4 text-slate-500" />
+                            <Factory className="h-4 w-4 text-slate-400" />
                         </div>
                         <select
                             name="industry_id"
                             value={formData.industry_id}
                             onChange={handleChange}
                             disabled={loadingIndustries}
-                            className="w-full pl-10 pr-10 py-2 bg-[#0b1114] border border-[#263238] rounded-lg text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors appearance-none disabled:opacity-50"
+                            className="theme-input w-full pl-10 pr-10 py-2 rounded-lg text-sm appearance-none disabled:opacity-50"
                         >
                             <option value="">Public / No Industry</option>
                             {industries.map(ind => (
@@ -167,7 +157,7 @@ const AddLocationForm = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Latitude</label>
+                        <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Latitude</label>
                         <input
                             type="number"
                             step="any"
@@ -175,12 +165,12 @@ const AddLocationForm = () => {
                             value={formData.latitude}
                             onChange={handleChange}
                             required
-                            className="w-full px-3 py-2 bg-[#0b1114] border border-[#263238] rounded-lg text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors placeholder-slate-600"
-                            placeholder="e.g. 23.2599"
+                            className="theme-input w-full px-3 py-2 rounded-lg text-sm"
+                            placeholder="e.g. 21.2787"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">Longitude</label>
+                        <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Longitude</label>
                         <input
                             type="number"
                             step="any"
@@ -188,18 +178,17 @@ const AddLocationForm = () => {
                             value={formData.longitude}
                             onChange={handleChange}
                             required
-                            className="w-full px-3 py-2 bg-[#0b1114] border border-[#263238] rounded-lg text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors placeholder-slate-600"
-                            placeholder="e.g. 77.4126"
+                            className="theme-input w-full px-3 py-2 rounded-lg text-sm"
+                            placeholder="e.g. 81.8661"
                         />
                     </div>
                 </div>
-
             </div>
 
             <button
                 type="submit"
                 disabled={loading}
-                className="mt-6 w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-[0_0_15px_rgba(0,230,118,0.2)] hover:shadow-[0_0_20px_rgba(0,230,118,0.4)] text-sm font-bold text-slate-950 bg-emerald-500 hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#1a2327] focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="mt-6 w-full flex items-center justify-center py-2.5 px-4 rounded-lg text-sm font-bold text-slate-950 bg-emerald-500 hover:bg-emerald-400 shadow-[0_0_15px_rgba(0,230,118,0.2)] hover:shadow-[0_0_20px_rgba(0,230,118,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
                 {loading ? 'Submitting...' : 'Register Location'}
             </button>

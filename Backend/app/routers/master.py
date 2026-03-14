@@ -43,6 +43,35 @@ async def get_regional_offices(
     ros = await cursor.to_list(length=100)
     return [map_id(ro) for ro in ros]
 
+@router.get("/regional-offices/mine", response_model=List[RegionalOfficeResponse])
+async def get_my_regional_offices(
+    current_user: UserResponse = Depends(get_current_active_user)
+):
+    """
+    Returns only the regional office(s) assigned to the current RO user.
+    Super admins get all offices. ROs get only their assigned region.
+    """
+    from bson import ObjectId
+
+    user_role = getattr(current_user.role, "value", current_user.role)
+
+    if user_role == "super_admin":
+        cursor = db.regional_offices.find({})
+        ros = await cursor.to_list(length=100)
+        return [map_id(ro) for ro in ros]
+
+    # RO — return only their assigned regional office
+    if not current_user.region_id:
+        return []
+
+    ro_doc = None
+    if ObjectId.is_valid(current_user.region_id):
+        ro_doc = await db.regional_offices.find_one({"_id": ObjectId(current_user.region_id)})
+    if not ro_doc:
+        ro_doc = await db.regional_offices.find_one({"name": {"$regex": current_user.region_id, "$options": "i"}})
+
+    return [map_id(ro_doc)] if ro_doc else []
+
 @router.put("/regional-offices/{ro_id}", response_model=RegionalOfficeResponse)
 async def update_regional_office(
     ro_id: str,
@@ -182,11 +211,18 @@ async def create_location(
     return map_id(created_location)
 
 @router.get("/locations", response_model=List[MonitoringLocationResponse])
-async def get_locations():
+async def get_locations(industry_id: str = None, region_id: str = None):
     """
-    Returns all Monitoring Locations. Open route for frontend heatmaps.
+    Returns Monitoring Locations. 
+    Can be filtered by industry_id or region_id.
     """
-    cursor = db.monitoring_locations.find({})
+    query = {}
+    if industry_id:
+        query["industry_id"] = industry_id
+    if region_id:
+        query["region_id"] = region_id
+        
+    cursor = db.monitoring_locations.find(query)
     locations = await cursor.to_list(length=1000)
     return [map_id(loc) for loc in locations]
 

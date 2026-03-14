@@ -16,7 +16,7 @@ const Overview = () => {
     const [totalIndustries, setTotalIndustries] = useState(0);
 
     useEffect(() => {
-        const fetchDashboardData = async () => {
+        const fetchData = async () => {
             try {
                 // Fetch KPIs
                 const roRes = await api.get('/api/master/regional-offices');
@@ -35,8 +35,11 @@ const Overview = () => {
                 setLoading(false);
             }
         };
+        fetchData();
+    }, []);
 
-        const fetchAlertsData = async () => {
+    useEffect(() => {
+        const fetchAlerts = async () => {
             try {
                 setIsLoading(true);
                 const res = await api.get('/api/alerts');
@@ -48,58 +51,34 @@ const Overview = () => {
                 setIsLoading(false);
             }
         };
-
-        // Initial fetch on mount
-        fetchDashboardData();
-        fetchAlertsData();
-
-        // Establish WebSocket for live reloads
-        const ws = new WebSocket('ws://localhost:8000/api/ws/alerts');
-        ws.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if (data.event === 'REFRESH_ALERTS') {
-                    // Refetch both datasets silently
-                    fetchDashboardData();
-                    fetchAlertsData();
-                }
-            } catch (e) {
-                console.error("WebSocket parse error:", e);
-            }
-        };
-
-        return () => {
-            if (ws.readyState === 1 || ws.readyState === WebSocket.OPEN) {
-                ws.close();
-            }
-        };
+        fetchAlerts();
     }, []);
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-white tracking-tight">Command Center</h1>
-                <div className="text-sm text-slate-400">Live Environmental Status</div>
+                <h1 className="text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Command Center</h1>
+                <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>Live Environmental Status</div>
             </div>
 
             {/* KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <div className="bg-[#1a2327] border border-[#263238] rounded-xl p-5 shadow-sm flex items-center justify-between">
+                <div className="glass-card glass-card-hover p-5 flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-medium text-slate-400">Total ROs</p>
-                        <h3 className="text-3xl font-bold text-white mt-1">{totalROs}</h3>
+                        <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Total ROs</p>
+                        <h3 className="text-3xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>{totalROs}</h3>
                     </div>
-                    <div className="p-3 bg-emerald-500/10 rounded-lg">
+                    <div className="p-3 bg-emerald-500/10 rounded-lg neon-border">
                         <Building2 className="w-6 h-6 text-emerald-500" />
                     </div>
                 </div>
 
-                <div className="bg-[#1a2327] border border-[#263238] rounded-xl p-5 shadow-sm flex items-center justify-between">
+                <div className="glass-card glass-card-hover p-5 flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-medium text-slate-400">Total Industries</p>
-                        <h3 className="text-3xl font-bold text-white mt-1">{totalIndustries}</h3>
+                        <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Total Industries</p>
+                        <h3 className="text-3xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>{totalIndustries}</h3>
                     </div>
-                    <div className="p-3 bg-blue-500/10 rounded-lg">
+                    <div className="p-3 bg-blue-500/10 rounded-lg neon-border" style={{ borderColor: 'rgba(59, 130, 246, 0.3)' }}>
                         <Factory className="w-6 h-6 text-blue-500" />
                     </div>
                 </div>
@@ -108,17 +87,17 @@ const Overview = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 {/* Heatmap Area */}
-                <div className="lg:col-span-2 bg-[#1a2327] border border-[#263238] rounded-xl shadow-sm overflow-hidden flex flex-col h-[500px]">
-                    <div className="p-4 border-b border-[#263238] flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <div className="lg:col-span-2 glass-card rounded-xl shadow-sm overflow-hidden flex flex-col h-[500px]">
+                    <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                        <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                             <MapPin className="text-emerald-500 w-5 h-5" /> Real-time Pollution Heatmap
                         </h2>
                     </div>
-                    <div className="flex-1 w-full bg-[#0b1114]">
+                    <div className="flex-1 w-full bg-bg-tertiary">
                         {loading ? (
                             <div className="flex items-center justify-center h-full text-emerald-500">Loading map...</div>
                         ) : (
-                            <StatusMap data={heatmapData} center={[23.2599, 77.4126]} zoom={7} />
+                            <StatusMap data={heatmapData} center={[21.2787, 81.8661]} zoom={7} />
                         )}
                     </div>
                 </div>
@@ -126,29 +105,29 @@ const Overview = () => {
                 {/* Info panels */}
                 <div className="space-y-6">
                     {/* Mini Forecast */}
-                    <Link to="/admin-dashboard/copilot" className="block transform transition-all hover:scale-[1.02]">
-                        <div className="bg-gradient-to-br from-[#1a2327] to-[#0b1114] border border-emerald-500/30 rounded-xl p-5 shadow-[0_0_15px_rgba(0,230,118,0.1)] group">
+                    <Link to="/admin-dashboard/copilot" className="block transform transition-all">
+                        <div className="glass-card glass-card-hover p-5 neon-border-strong group">
                             <div className="flex items-start justify-between mb-4">
                                 <div>
-                                    <h3 className="text-sm font-semibold text-emerald-500 mb-1 flex items-center gap-2">
+                                    <h3 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-2">
                                         <Sparkles className="w-4 h-4" /> AI Risk Outlook
                                     </h3>
                                     <p className="text-xs text-slate-400">Next 72 Hours</p>
                                 </div>
-                                <div className="bg-emerald-500/20 p-2 rounded-lg text-emerald-500">
+                                <div className="bg-emerald-500/10 p-2 rounded-lg text-emerald-600 dark:text-emerald-500 neon-border">
                                     <TrendingUp className="w-5 h-5" />
                                 </div>
                             </div>
-                            <div className="text-2xl font-bold text-white mb-2">Moderate Increase</div>
-                            <p className="text-xs text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors">
+                            <div className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Moderate Increase</div>
+                            <p className="text-xs leading-relaxed group-hover:text-slate-300 transition-colors" style={{ color: 'var(--text-secondary)' }}>
                                 PM2.5 levels are forecasted to rise by 12% in the central industrial corridor due to thermal inversion.
                             </p>
                         </div>
                     </Link>
 
                     {/* Active Alerts List */}
-                    <div className="bg-[#1a2327] border border-[#263238] rounded-xl p-5 shadow-sm flex flex-col min-h-[350px]">
-                        <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                    <div className="glass-card rounded-xl p-5 shadow-sm flex flex-col min-h-[350px]">
+                        <h3 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                             <AlertCircle className="w-4 h-4 text-red-500" /> Active System Alerts
                         </h3>
                         
@@ -156,14 +135,14 @@ const Overview = () => {
                             {isLoading ? (
                                 <div className="space-y-3">
                                     {[1, 2, 3].map((n) => (
-                                        <div key={n} className="h-16 bg-slate-800/50 rounded-lg animate-pulse border border-[#263238]"></div>
+                                        <div key={n} className="h-16 bg-slate-800/50 rounded-lg animate-pulse border border-white/10"></div>
                                     ))}
                                 </div>
                             ) : alerts.length === 0 ? (
-                                <div className="flex-1 flex flex-col items-center justify-center bg-slate-800/50 border border-emerald-500/20 rounded-xl p-6 text-center">
+                                <div className="flex-1 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-800/50 border border-emerald-500/10 dark:border-emerald-500/20 rounded-xl p-6 text-center">
                                     <ShieldCheck className="w-12 h-12 text-emerald-500 mb-3" />
-                                    <h4 className="font-bold text-white text-lg">All Clear</h4>
-                                    <p className="text-sm text-slate-400 mt-1">
+                                    <h4 className="font-bold text-slate-800 dark:text-white text-lg">All Clear</h4>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                         Statewide compliance is currently at 100%. No active environmental alerts.
                                     </p>
                                 </div>
@@ -175,20 +154,20 @@ const Overview = () => {
                                         const isAnomaly = alert.type === 'statistical_anomaly' || alert.alert_type === 'STATISTICAL_ANOMALY';
                                         
                                         return (
-                                            <div key={alert.id} className={`bg-[#0b1114] border rounded-lg p-3 flex flex-col gap-2 transition-colors hover:border-slate-600 ${isMissingLimit ? 'border-blue-500/40 bg-blue-500/5' : isAnomaly ? 'border-amber-500/40 bg-amber-500/5' : 'border-[#263238]'}`}>
+                                            <div key={alert.id} className={`glass-card rounded-lg p-3 flex flex-col gap-2 transition-colors hover:border-slate-600 ${isMissingLimit ? 'border-blue-500/40 bg-blue-500/5' : isAnomaly ? 'border-amber-500/40 bg-amber-500/5' : ''}`}>
                                                 <div className="flex justify-between items-start">
                                                     <div>
-                                                        <p className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
+                                                        <p className="text-sm font-bold flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
                                                             {isAnomaly && <Activity className="w-4 h-4 text-amber-500" />}
                                                             {alert.industry_name || alert.location_name || 'Industrial Facility'}
                                                         </p>
-                                                        <p className="text-xs text-slate-400 mt-0.5">
+                                                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
                                                             {isMissingLimit ? (
                                                                 <>New Param: <span className="text-blue-400 font-bold">{alert.parameter}</span> {alert.unit ? `(${alert.unit})` : ''}</>
                                                             ) : isAnomaly ? (
                                                                 <>Warning: <span className="text-amber-500 font-bold">Statistical Anomaly</span></>
                                                             ) : (
-                                                                <>Parameter: <span className="text-white font-mono font-bold">{alert.parameter}</span></>
+                                                                <>Parameter: <span className="font-mono font-bold" style={{ color: 'var(--text-primary)' }}>{alert.parameter}</span></>
                                                             )}
                                                         </p>
                                                     </div>
@@ -231,12 +210,12 @@ const Overview = () => {
                                                             <Clock className="w-3 h-3" />
                                                             {new Date(alert.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                                                         </div>
-                                                        <div className="text-[10px] text-slate-500 text-right">
+                                                        <div className="text-[10px] text-right" style={{ color: 'var(--text-secondary)' }}>
                                                             {isAnomaly ? (
                                                                 <span className="font-bold text-amber-500">Val: {alert.exceeded_value || alert.value}</span>
                                                             ) : (
                                                                 <>
-                                                                    <div className="font-bold text-slate-300">Val: {alert.exceeded_value || alert.value}</div>
+                                                                    <div className="font-bold" style={{ color: 'var(--text-primary)' }}>Val: {alert.exceeded_value || alert.value}</div>
                                                                     Limit: {alert.allowed_value}
                                                                 </>
                                                             )}

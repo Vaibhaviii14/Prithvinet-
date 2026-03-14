@@ -3,7 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
-import CitizenMap from './pages/public/CitizenMap';
+import CitizenPortal from './pages/public/CitizenPortal';
+import IncidentReport from './pages/public/IncidentReport';
 
 // Admin Layout and Pages
 import AdminLayout from './layouts/AdminLayout';
@@ -13,6 +14,7 @@ import Industries from './pages/admin/Industries';
 import AICopilot from './pages/admin/AICopilot';
 import UserManagement from './pages/admin/UserManagement';
 import PolicyLimits from './pages/admin/PolicyLimits';
+import CitizenReports from './pages/admin/CitizenReports';
 
 // RO Layout and Pages
 import ROLayout from './layouts/ROLayout';
@@ -21,6 +23,7 @@ import ROLocations from './pages/ro/ROLocations';
 import LogsView from './pages/ro/LogsView';
 import ROTeam from './pages/ro/ROTeam';
 import ROForecast from './pages/ro/ROForecast';
+import ROExport from './pages/ro/ROExport';
 
 import IndustryLayout from './layouts/IndustryLayout';
 import IndustryOverview from './pages/industry/IndustryOverview';
@@ -41,7 +44,8 @@ function App() {
 
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/public-portal" element={<CitizenMap />} />
+          <Route path="/public-portal" element={<CitizenPortal />} />
+          <Route path="/report-incident" element={<IncidentReport />} />
 
           {/* Protected Routes configured with their respective roles. */}
           <Route element={<ProtectedRoute allowedRoles={['super_admin']} />}>
@@ -54,6 +58,7 @@ function App() {
               <Route path="/admin-dashboard/policy" element={<PolicyLimits />} />
               <Route path="/admin-dashboard/policy" element={<PolicyLimits />} />
               <Route path="/admin-dashboard/users" element={<UserManagement />} />
+              <Route path="/admin-dashboard/citizen-reports" element={<CitizenReports />} />
             </Route>
           </Route>
 
@@ -64,6 +69,7 @@ function App() {
               <Route path="/ro-dashboard/logs" element={<LogsView />} />
               <Route path="/ro-dashboard/team" element={<ROTeam />} />
               <Route path="/ro-dashboard/forecast" element={<ROForecast />} />
+              <Route path="/ro-dashboard/export" element={<ROExport />} />
             </Route>
           </Route>
 

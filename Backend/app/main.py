@@ -14,7 +14,7 @@ app = FastAPI(title="PrithviNet API 🚀")
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173","http://127.0.0.1:5174","http://localhost:5174"], 
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -22,6 +22,7 @@ app.add_middleware(
 
 from app.database import db
 from app.routes import auth
+from app.ml.anomaly import detect_anomaly
 
 # Note: Removed the try/except block. It is best practice to have a strict 
 # folder structure. Assuming they are all in routers as discussed previously.
@@ -106,10 +107,33 @@ async def create_reading(
         await alerts_collection.insert_one(alert_doc)
         alert_triggered = True
     
+    anomaly_detected = False
+    
+    # Anomaly Detection Logic
+    pollutant_name = limit["name"] if limit and "name" in limit else str(parameter_id)
+    parameters_dict = {pollutant_name: value}
+    anomaly_result = await detect_anomaly(db, str(location_id), parameters_dict)
+    
+    if anomaly_result.get("is_anomaly") == True and not alert_triggered:
+        alert_doc = {
+            "reading_id": str(result.inserted_id),
+            "location_id": location_id,
+            "parameter_id": parameter_id,
+            "value": value,
+            "type": "statistical_anomaly",
+            "severity": "WARNING",
+            "message": f"Sudden fluctuation detected. Value {value} deviates significantly from the 24h baseline of {anomaly_result['mean']}.",
+            "status": "open",
+            "timestamp": datetime.utcnow()
+        }
+        await alerts_collection.insert_one(alert_doc)
+        anomaly_detected = True
+    
     return {
         "id": str(result.inserted_id),
         "value": value,
         "alert_triggered": alert_triggered,
+        "anomaly_detected": anomaly_detected,
         "limit": limit["max_value"] if limit else None
     }
 

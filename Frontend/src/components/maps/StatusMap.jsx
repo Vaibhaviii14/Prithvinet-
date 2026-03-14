@@ -32,7 +32,7 @@ iconAnchor: [10, 10],
     });
 };
 
-const StatusMap = ({ data = [], center = [23.2599, 77.4126], zoom = 7 }) => {
+const StatusMap = ({ data = [], center = [21.2787, 81.8661], zoom = 7 }) => {
     
     // Memoize the mapping so the map isn't completely redrawn on unrelated renders
     const markers = useMemo(() => {
