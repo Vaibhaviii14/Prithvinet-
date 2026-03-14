@@ -40,6 +40,7 @@ async def create_manual_log(
         data_dict["timestamp"] = datetime.now(timezone.utc)
 
     new_log = await db.pollution_logs.insert_one(data_dict)
+    log_id_str = str(new_log.inserted_id)
     
     # Query limits collection for the corresponding category
     limits_cursor = db.prescribed_limits.find({"category": log_data.category})
@@ -48,15 +49,38 @@ async def create_manual_log(
 
     # If any parameter in the reading exceeds the max_allowed_value, insert a new alert
     for param, value in log_data.parameters.items():
-        if param in limits_map and value > limits_map[param]:
+        if param in limits_map:
+            if value > limits_map[param]:
+                alert_doc = {
+                    "industry_id": log_data.industry_id,
+                    "location_id": log_data.location_id,
+                    "category": log_data.category,
+                    "parameter": param,
+                    "exceeded_value": value,
+                    "allowed_value": limits_map[param],
+                    "status": "UNRESOLVED",
+                    "alert_type": "COMPLIANCE",
+                    "log_id": log_id_str,
+                    "timestamp": datetime.now(timezone.utc)
+                }
+                await db.alerts.insert_one(alert_doc)
+        else:
+            # New Parameter with no limit set - Notify Super Admin
+            unit = None
+            if log_data.parameter_units:
+                unit = log_data.parameter_units.get(param)
+                
             alert_doc = {
                 "industry_id": log_data.industry_id,
                 "location_id": log_data.location_id,
                 "category": log_data.category,
                 "parameter": param,
                 "exceeded_value": value,
-                "allowed_value": limits_map[param],
+                "allowed_value": 0, # No limit set
                 "status": "UNRESOLVED",
+                "alert_type": "LIMIT_MISSING",
+                "unit": unit,
+                "log_id": log_id_str,
                 "timestamp": datetime.now(timezone.utc)
             }
             await db.alerts.insert_one(alert_doc)
@@ -98,6 +122,38 @@ async def create_manual_log(
 
     created_log = await db.pollution_logs.find_one({"_id": new_log.inserted_id})
     return map_id(created_log)
+
+@router.delete("/logs/{log_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_log(
+    log_id: str,
+    current_user: UserResponse = Depends(RoleChecker(["industry", "super_admin"]))
+):
+    """
+    Delete a pollution log and all its associated alerts.
+    Industries can only delete their own logs.
+    """
+    try:
+        obj_id = ObjectId(log_id)
+    except:
+        return {"detail": "Invalid log ID format"}
+
+    # Check existence and ownership
+    log = await db.pollution_logs.find_one({"_id": obj_id})
+    if not log:
+        return {"detail": "Log not found"}
+
+    user_role = getattr(current_user.role, "value", current_user.role)
+    if user_role == UserRole.INDUSTRY.value:
+        if log.get("industry_id") != current_user.entity_id:
+            return {"detail": "Not authorized to delete this log"}
+
+    # Delete the log
+    await db.pollution_logs.delete_one({"_id": obj_id})
+    
+    # Delete associated alerts
+    await db.alerts.delete_many({"log_id": log_id})
+    
+    return None
 
 @router.get("/logs", response_model=List[PollutionLogResponse])
 async def get_logs(

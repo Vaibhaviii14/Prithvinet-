@@ -13,9 +13,9 @@ import { Activity, AlertTriangle, CheckCircle } from 'lucide-react';
 import api from '../api/axios'; // Add this import
 
 const PARAMETER_MAP = {
-  Air: ['SO2', 'PM2.5', 'NO2', 'CO', 'O3', 'PM10'],
-  Water: ['pH', 'BOD', 'TSS', 'COD', 'TDS', 'DO'],
-  Noise: ['Noise_dB', 'Leq']
+  Air: ["PM10", "PM2.5", "SO2", "NO2", "CO", "O3", "NH3", "Pb", "Benzene", "BaP"],
+  Water: ["pH", "BOD", "COD", "TSS", "TDS", "Oil & Grease", "Lead", "Arsenic", "Mercury"],
+  Noise: ["Day Time (dB)", "Night Time (dB)"]
 };
 
 const IndustryComplianceChart = () => {

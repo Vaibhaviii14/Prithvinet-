@@ -4,9 +4,9 @@ import api from '../../api/axios';
 
 const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
     const PARAMETER_OPTIONS = {
-        Air: ['PM2.5', 'PM10', 'SO2', 'NOx', 'NO2', 'CO', 'O3', 'AQI'],
-        Water: ['pH', 'BOD', 'COD', 'TSS', 'TDS', 'DO'],
-        Noise: ['Noise_dB', 'Leq']
+        Air: ["PM10", "PM2.5", "SO2", "NO2", "CO", "O3", "NH3", "Pb", "Benzene", "BaP"],
+        Water: ["pH", "BOD", "COD", "TSS", "TDS", "Oil & Grease", "Lead", "Arsenic", "Mercury"],
+        Noise: ["Day Time (dB)", "Night Time (dB)"]
     };
 
     const [submitting, setSubmitting] = useState(false);
@@ -25,7 +25,7 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
         timestamp: getLocalDatetimeString()
     });
 
-    const [parameters, setParameters] = useState([{ key: '', value: '', isCustom: false }]);
+    const [parameters, setParameters] = useState([{ key: '', value: '', unit: '', isCustom: false }]);
 
     useEffect(() => {
         if (isOpen) {
@@ -59,7 +59,7 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
     };
 
     const addParameter = () => {
-        setParameters([...parameters, { key: '', value: '', isCustom: false }]);
+        setParameters([...parameters, { key: '', value: '', unit: '', isCustom: false }]);
     };
 
     const removeParameter = (index) => {
@@ -71,11 +71,15 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Clean parameters array into an object
+        // Clean parameters array into objects
         const paramObj = {};
+        const unitObj = {};
         parameters.forEach(p => {
             if (p.key.trim() && p.value !== '') {
                 paramObj[p.key.trim()] = parseFloat(p.value);
+                if (p.unit.trim()) {
+                    unitObj[p.key.trim()] = p.unit.trim();
+                }
             }
         });
 
@@ -95,6 +99,7 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
                 industry_id: industry_id,
                 category: formData.category,
                 parameters: paramObj,
+                parameter_units: unitObj,
                 source: formData.source,
                 timestamp: new Date(formData.timestamp).toISOString()
             };
@@ -106,7 +111,7 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
             onClose();
             
             // Reset state
-            setParameters([{ key: '', value: '', isCustom: false }]);
+            setParameters([{ key: '', value: '', unit: '', isCustom: false }]);
             setFormData({ ...formData, source: '' });
             
         } catch (error) {
@@ -240,15 +245,26 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
                                                 onChange={(e) => handleParamChange(i, 'value', e.target.value)}
                                             />
                                         </div>
-                                        {parameters.length > 1 && (
-                                            <button 
-                                                type="button" 
-                                                onClick={() => removeParameter(i)}
-                                                className="p-2 text-slate-500 hover:text-red-500 transition-colors"
-                                            >
-                                                <X className="w-4 h-4" />
-                                            </button>
+                                        {param.isCustom && (
+                                            <div className="w-24">
+                                                <input 
+                                                    type="text"
+                                                    required
+                                                    placeholder="Unit (e.g. mg/L)"
+                                                    className="w-full bg-[#1a2327] border border-emerald-500/30 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                                    value={param.unit}
+                                                    onChange={(e) => handleParamChange(i, 'unit', e.target.value)}
+                                                />
+                                            </div>
                                         )}
+                                        <button 
+                                            type="button" 
+                                            onClick={() => removeParameter(i)}
+                                            disabled={parameters.length === 1}
+                                            className="p-2 text-slate-500 hover:text-red-500 transition-colors disabled:opacity-0"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
                                     </div>
                                 ))}
                             </div>

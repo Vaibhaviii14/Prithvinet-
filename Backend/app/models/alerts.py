@@ -11,6 +11,9 @@ class AlertBase(BaseModel):
     allowed_value: float
     status: str = "UNRESOLVED"
     monitoring_team_id: Optional[str] = None
+    alert_type: str = "COMPLIANCE" # COMPLIANCE or LIMIT_MISSING
+    unit: Optional[str] = None
+    log_id: Optional[str] = None
     industry_response: Optional[str] = None
     ro_feedback: Optional[str] = None
     responded_at: Optional[datetime] = None

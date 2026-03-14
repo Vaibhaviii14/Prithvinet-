@@ -1,30 +1,48 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Search, Activity, CheckCircle2, Filter } from 'lucide-react';
+import { FileText, Search, Activity, CheckCircle2, Filter, Trash2 } from 'lucide-react';
 import api from '../../api/axios';
 
 const IndustryLogs = () => {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [deletingId, setDeletingId] = useState(null);
     const [categoryFilter, setCategoryFilter] = useState('');
 
-    useEffect(() => {
-        const fetchLogs = async () => {
-            try {
-                setLoading(true);
-                let url = '/api/ingestion/logs';
-                if (categoryFilter) {
-                    url += `?category=${categoryFilter}`;
-                }
-                const res = await api.get(url);
-                setLogs(res.data);
-            } catch (err) {
-                console.error("Failed to fetch industry logs", err.response?.data || err);
-            } finally {
-                setLoading(false);
+    const fetchLogs = async () => {
+        try {
+            setLoading(true);
+            let url = '/api/ingestion/logs';
+            if (categoryFilter) {
+                url += `?category=${categoryFilter}`;
             }
-        };
+            const res = await api.get(url);
+            setLogs(res.data);
+        } catch (err) {
+            console.error("Failed to fetch industry logs", err.response?.data || err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchLogs();
     }, [categoryFilter]);
+
+    const handleDeleteLog = async (logId) => {
+        if (!window.confirm("Are you sure you want to permanently delete this log? This will also remove any associated compliance alerts.")) return;
+
+        try {
+            setDeletingId(logId);
+            await api.delete(`/api/ingestion/logs/${logId}`);
+            // Success - update local state immediately
+            setLogs(logs.filter(l => l.id !== logId));
+        } catch (err) {
+            console.error("Failed to delete log", err.response?.data || err);
+            alert("Failed to delete log. Please try again.");
+        } finally {
+            setDeletingId(null);
+        }
+    };
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto pb-10">
@@ -66,19 +84,20 @@ const IndustryLogs = () => {
                                 <th className="p-4">Source</th>
                                 <th className="p-4">Location ID</th>
                                 <th className="p-4">Parameters</th>
+                                <th className="p-4 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[#263238]">
                             {loading ? (
                                 <tr>
-                                    <td colSpan="5" className="p-12 text-center text-slate-500">
+                                    <td colSpan="6" className="p-12 text-center text-slate-500">
                                         <Activity className="w-8 h-8 mx-auto mb-4 animate-spin text-emerald-500" />
                                         Loading Historical Logs...
                                     </td>
                                 </tr>
                             ) : logs.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" className="p-12 text-center text-slate-500">
+                                    <td colSpan="6" className="p-12 text-center text-slate-500">
                                         <FileText className="w-12 h-12 mx-auto mb-4 text-slate-600 opacity-50" />
                                         No log submissions found.
                                     </td>
@@ -113,6 +132,20 @@ const IndustryLogs = () => {
                                                     </span>
                                                 ))}
                                             </div>
+                                        </td>
+                                        <td className="p-4 text-center">
+                                            <button 
+                                                onClick={() => handleDeleteLog(log.id)}
+                                                disabled={deletingId === log.id}
+                                                className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                                                title="Delete Log"
+                                            >
+                                                {deletingId === log.id ? (
+                                                    <Activity className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="w-4 h-4" />
+                                                )}
+                                            </button>
                                         </td>
                                     </tr>
                                 ))

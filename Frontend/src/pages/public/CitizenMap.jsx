@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { MapPin, ShieldCheck, AlertTriangle, Activity } from 'lucide-react';
 import api from '../../api/axios';
 import StatusMap from '../../components/maps/StatusMap';
 

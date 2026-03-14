@@ -146,7 +146,7 @@ const ROOverview = () => {
 
             {/* KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-[#1a2327] border border-[#263238] rounded-2xl p-6 shadow-sm flex items-center justify-between">
+                <div className="bg-[#1a2327]/70 backdrop-blur-md border border-[#263238] rounded-2xl p-6 shadow-sm flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-slate-400">Total Locations</p>
                         <p className="text-3xl font-black text-white mt-1">{stats.totalLocations}</p>
@@ -155,7 +155,7 @@ const ROOverview = () => {
                         <MapPin className="w-6 h-6" />
                     </div>
                 </div>
-                <div className="bg-[#1a2327] border border-[#263238] rounded-2xl p-6 shadow-sm flex items-center justify-between">
+                <div className="bg-[#1a2327]/70 backdrop-blur-md border border-[#263238] rounded-2xl p-6 shadow-sm flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-slate-400">Tracked Industries</p>
                         <p className="text-3xl font-black text-white mt-1">{stats.totalIndustries}</p>
@@ -164,7 +164,7 @@ const ROOverview = () => {
                         <Building2 className="w-6 h-6" />
                     </div>
                 </div>
-                <div className="bg-[#1a2327] border border-[#263238] rounded-2xl p-6 shadow-sm flex items-center justify-between">
+                <div className="bg-[#1a2327]/70 backdrop-blur-md border border-[#263238] rounded-2xl p-6 shadow-sm flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-slate-400">Active Alerts</p>
                         <p className="text-3xl font-black text-white mt-1">{stats.activeAlerts}</p>
@@ -177,7 +177,7 @@ const ROOverview = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Heatmap */}
-                <div className="lg:col-span-2 bg-[#1a2327] border border-[#263238] rounded-xl shadow-sm overflow-hidden flex flex-col h-[600px]">
+                <div className="lg:col-span-2 bg-[#1a2327]/70 backdrop-blur-md border border-[#263238] rounded-xl shadow-sm overflow-hidden flex flex-col h-[600px]">
                     <div className="p-4 border-b border-[#263238] bg-slate-900/30 flex items-center justify-between">
                         <h2 className="text-lg font-bold text-white flex items-center gap-2">
                             <Activity className="text-emerald-500 w-5 h-5" /> Local Live Map
@@ -195,7 +195,7 @@ const ROOverview = () => {
                 </div>
 
                 {/* Alerts Panel */}
-                <div className="bg-[#1a2327] border border-[#263238] rounded-xl flex flex-col h-[600px]">
+                <div className="bg-[#1a2327]/70 backdrop-blur-md border border-[#263238] rounded-xl flex flex-col h-[600px]">
                     <div className="p-4 border-b border-[#263238] bg-slate-900/30">
                         <h2 className="text-lg font-bold text-white flex items-center gap-2">
                             <AlertTriangle className="text-red-500 w-5 h-5" /> Pending Alerts
@@ -236,7 +236,7 @@ const ROOverview = () => {
                                 </p>
                                 
                                 {alert.status === 'ACTION_TAKEN' && alert.industry_response && (
-                                    <div className="bg-[#1a2327] rounded border border-[#263238] p-2.5 mb-3 text-xs">
+                                    <div className="bg-[#1a2327]/70 backdrop-blur-md rounded border border-[#263238] p-2.5 mb-3 text-xs">
                                         <p className="font-semibold text-emerald-500 mb-1">Industry Response:</p>
                                         <p className="text-slate-300 italic">"{alert.industry_response}"</p>
                                     </div>
@@ -273,7 +273,7 @@ const ROOverview = () => {
             {/* Reject Modal */}
             {selectedRejectAlert && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-                    <div className="bg-[#1a2327] border border-[#263238] rounded-2xl p-6 shadow-2xl w-full max-w-lg relative">
+                    <div className="bg-[#1a2327]/70 backdrop-blur-md border border-[#263238] rounded-2xl p-6 shadow-2xl w-full max-w-lg relative">
                         <button onClick={() => setSelectedRejectAlert(null)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
                             <X className="w-5 h-5" />
                         </button>

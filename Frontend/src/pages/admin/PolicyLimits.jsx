@@ -19,14 +19,34 @@ const PolicyLimits = () => {
     const [customParameter, setCustomParameter] = useState('');
     const [maxValue, setMaxValue] = useState('');
     const [unit, setUnit] = useState('');
+    const [discoveredParams, setDiscoveredParams] = useState({});
 
     const fetchLimits = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/api/master/limits');
-            setExistingLimits(res.data || []);
+            const [limitsRes, alertsRes] = await Promise.all([
+                api.get('/api/master/limits'),
+                api.get('/api/alerts')
+            ]);
+            
+            setExistingLimits(limitsRes.data || []);
+            
+            // Extract unique custom parameters that don't have limits yet from LIMIT_MISSING alerts
+            const customFromAlerts = alertsRes.data.filter(a => a.alert_type === 'LIMIT_MISSING' && a.status === 'UNRESOLVED');
+            const discovery = { Air: [], Water: [], Noise: [] };
+            
+            customFromAlerts.forEach(alert => {
+                if (alert.category && alert.parameter && !discovery[alert.category].includes(alert.parameter)) {
+                    // Only add if not already in the hardcoded list
+                    const hardcoded = { Air: AIR_PARAMS, Water: WATER_PARAMS, Noise: NOISE_PARAMS }[alert.category];
+                    if (!hardcoded.includes(alert.parameter)) {
+                        discovery[alert.category].push(alert.parameter);
+                    }
+                }
+            });
+            setDiscoveredParams(discovery);
         } catch (error) {
-            console.error("Failed fetching master limits", error);
+            console.error("Failed fetching master limits or alerts", error);
         } finally {
             setLoading(false);
         }
@@ -37,6 +57,21 @@ const PolicyLimits = () => {
     }, []);
 
     // Auto-fill Logic
+    useEffect(() => {
+        const currentPath = window.location.search;
+        const params = new URLSearchParams(currentPath);
+        const urlCat = params.get('category');
+        const urlParam = params.get('parameter');
+        const urlUnit = params.get('unit');
+
+        if (urlCat && urlParam && !category) {
+            setCategory(urlCat);
+            setParameterDrop(urlParam);
+            if (urlUnit) setUnit(urlUnit);
+            setStep(3);
+        }
+    }, [existingLimits]);
+
     useEffect(() => {
         if (!category) return;
 
@@ -56,9 +91,14 @@ const PolicyLimits = () => {
             setMaxValue(exactMatch.max_allowed_value);
             setUnit(exactMatch.unit);
         } else {
-            // It's a true new limit, reset inputs to let them type
-            setMaxValue('');
-            setUnit('');
+            // Check discovered units
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('parameter') === currentParam && urlParams.get('unit')) {
+                setUnit(urlParams.get('unit'));
+            } else {
+                setMaxValue('');
+                setUnit('');
+            }
         }
     }, [parameterDrop, customParameter, category, existingLimits]);
 
@@ -87,10 +127,11 @@ const PolicyLimits = () => {
     };
 
     const getDropdownOptions = () => {
+        const discovered = discoveredParams[category] || [];
         switch (category) {
-            case 'Air': return AIR_PARAMS;
-            case 'Water': return WATER_PARAMS;
-            case 'Noise': return NOISE_PARAMS;
+            case 'Air': return [...AIR_PARAMS, ...discovered];
+            case 'Water': return [...WATER_PARAMS, ...discovered];
+            case 'Noise': return [...NOISE_PARAMS, ...discovered];
             default: return [];
         }
     };
@@ -286,6 +327,37 @@ const PolicyLimits = () => {
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-5">
+                        {/* Pending Discovery Alerts */}
+                        {Object.values(discoveredParams).flat().length > 0 && (
+                            <div className="mb-6 space-y-2">
+                                {Object.entries(discoveredParams).map(([cat, params]) => 
+                                    params.map(p => (
+                                        <div key={`${cat}-${p}`} className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-center justify-between group animate-pulse hover:animate-none transition-all">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-red-500/20 rounded-lg">
+                                                    <ShieldAlert className="w-5 h-5 text-red-500" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-sm font-bold text-white">Missing Policy: {p}</h4>
+                                                    <p className="text-[10px] text-red-400 uppercase font-black">{cat} Segment</p>
+                                                </div>
+                                            </div>
+                                            <button 
+                                                onClick={() => {
+                                                    setCategory(cat);
+                                                    setParameterDrop(p);
+                                                    setStep(3);
+                                                }}
+                                                className="text-[10px] bg-red-500 text-white font-bold px-3 py-1.5 rounded-lg hover:bg-red-600 transition-colors uppercase tracking-widest shadow-[0_0_10px_rgba(239,68,68,0.3)]"
+                                            >
+                                                Fix Now
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        )}
+
                         {loading ? (
                             <div className="h-full flex items-center justify-center">
                                 <Activity className="w-8 h-8 text-emerald-500 animate-spin" />

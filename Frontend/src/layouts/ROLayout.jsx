@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Grid, MapPin, List, Users, Sparkles, LogOut, Globe } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
+import bgImage from "../assets/bg/prithvinet-bg.png";
 
 const ROLayout = () => {
     const location = useLocation();
@@ -16,9 +17,21 @@ const ROLayout = () => {
     ];
 
     return (
-        <div className="flex h-screen bg-[#0b1114] text-slate-200 font-sans overflow-hidden">
+        <div className="flex h-screen bg-[#0b1114] text-slate-200 font-sans relative overflow-hidden">
+            {/* Background */}
+            <div className="absolute inset-0 z-0 pointer-events-none">
+                <img
+                    src={bgImage}
+                    alt="background"
+                    className="w-full h-full object-cover scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-[#0b1114]/70 via-[#0b1114]/60 to-[#0b1114]/80 backdrop-blur-[1px]"></div>
+                {/* Additional dark overlay requested */}
+                <div className="absolute inset-0 bg-black/50"></div>
+            </div>
+
             {/* Sidebar */}
-            <aside className="w-64 bg-[#1a2327] border-r border-[#263238] flex flex-col z-20">
+            <aside className="w-64 bg-[#1a2327]/90 backdrop-blur-md border-r border-[#263238] flex flex-col z-20 relative">
                 <div className="p-6 flex items-center gap-3 border-b border-[#263238]">
                     <div className="bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20 text-emerald-500">
                         <Globe className="w-5 h-5" />
@@ -61,9 +74,9 @@ const ROLayout = () => {
             </aside>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 relative z-10">
                 {/* Topbar */}
-                <header className="h-16 bg-[#1a2327] border-b border-[#263238] flex items-center justify-between px-8 z-10 shrink-0">
+                <header className="h-16 bg-[#1a2327]/90 backdrop-blur-md border-b border-[#263238] flex items-center justify-between px-8 z-10 shrink-0">
                     <h1 className="text-lg font-semibold text-white">
                         {navItems.find(item => item.path === location.pathname)?.label || 'Regional Dashboard'}
                     </h1>

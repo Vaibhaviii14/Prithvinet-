@@ -148,38 +148,66 @@ const Overview = () => {
                                 </div>
                             ) : (
                                 <div className="space-y-3 overflow-y-auto max-h-[400px] pr-1">
-                                    {alerts.map((alert) => (
-                                        <div key={alert.id} className="bg-[#0b1114] border border-[#263238] rounded-lg p-3 flex flex-col gap-2 transition-colors hover:border-slate-600">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <p className="text-sm font-bold text-slate-200">
-                                                        {alert.industry_name || alert.location_name || 'Industrial Facility'}
-                                                    </p>
-                                                    <p className="text-xs text-slate-400 mt-0.5">
-                                                        Parameter: <span className="text-white font-mono font-bold">{alert.parameter}</span>
-                                                    </p>
+                                    {alerts.map((alert) => {
+                                        const isMissingLimit = alert.alert_type === 'LIMIT_MISSING';
+                                        
+                                        return (
+                                            <div key={alert.id} className={`bg-[#0b1114] border rounded-lg p-3 flex flex-col gap-2 transition-colors hover:border-slate-600 ${isMissingLimit ? 'border-blue-500/40 bg-blue-500/5' : 'border-[#263238]'}`}>
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <p className="text-sm font-bold text-slate-200">
+                                                            {alert.industry_name || alert.location_name || 'Industrial Facility'}
+                                                        </p>
+                                                        <p className="text-xs text-slate-400 mt-0.5">
+                                                            {isMissingLimit ? (
+                                                                <>New Param: <span className="text-blue-400 font-bold">{alert.parameter}</span> {alert.unit ? `(${alert.unit})` : ''}</>
+                                                            ) : (
+                                                                <>Parameter: <span className="text-white font-mono font-bold">{alert.parameter}</span></>
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                    {isMissingLimit ? (
+                                                        <span className="bg-blue-500/10 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-blue-500/20 whitespace-nowrap">
+                                                            Limit Missing
+                                                        </span>
+                                                    ) : alert.status === 'UNRESOLVED' ? (
+                                                        <span className="bg-red-500/10 text-red-500 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-red-500/20 whitespace-nowrap">
+                                                            Unresolved
+                                                        </span>
+                                                    ) : (
+                                                        <span className="bg-amber-500/10 text-amber-500 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-amber-500/20 whitespace-nowrap">
+                                                            Action Taken
+                                                        </span>
+                                                    )}
                                                 </div>
-                                                {alert.status === 'UNRESOLVED' ? (
-                                                    <span className="bg-red-500/10 text-red-500 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-red-500/20 whitespace-nowrap">
-                                                        Unresolved
-                                                    </span>
+
+                                                {isMissingLimit ? (
+                                                    <div className="flex justify-between items-center mt-1">
+                                                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                                                            <Clock className="w-3 h-3" />
+                                                            {new Date(alert.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                                        </div>
+                                                        <Link 
+                                                            to={`/admin-dashboard/policy?category=${alert.category}&parameter=${alert.parameter}&unit=${alert.unit || ''}`} 
+                                                            className="text-[10px] bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white px-2 py-1 rounded transition-all font-bold"
+                                                        >
+                                                            Set Limit
+                                                        </Link>
+                                                    </div>
                                                 ) : (
-                                                    <span className="bg-amber-500/10 text-amber-500 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-amber-500/20 whitespace-nowrap">
-                                                        Action Taken
-                                                    </span>
+                                                    <div className="flex justify-between items-end mt-1">
+                                                        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                                                            <Clock className="w-3 h-3" />
+                                                            {new Date(alert.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-500">
+                                                            Limit: {alert.allowed_value}
+                                                        </div>
+                                                    </div>
                                                 )}
                                             </div>
-                                            <div className="flex justify-between items-end mt-1">
-                                                <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                                                    <Clock className="w-3 h-3" />
-                                                    {new Date(alert.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
-                                                </div>
-                                                <div className="text-[10px] text-slate-500">
-                                                    Limit: {alert.allowed_value}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
