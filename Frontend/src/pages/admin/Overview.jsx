@@ -16,7 +16,7 @@ const Overview = () => {
     const [totalIndustries, setTotalIndustries] = useState(0);
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchDashboardData = async () => {
             try {
                 // Fetch KPIs
                 const roRes = await api.get('/api/master/regional-offices');
@@ -35,11 +35,8 @@ const Overview = () => {
                 setLoading(false);
             }
         };
-        fetchData();
-    }, []);
 
-    useEffect(() => {
-        const fetchAlerts = async () => {
+        const fetchAlertsData = async () => {
             try {
                 setIsLoading(true);
                 const res = await api.get('/api/alerts');
@@ -51,7 +48,31 @@ const Overview = () => {
                 setIsLoading(false);
             }
         };
-        fetchAlerts();
+
+        // Initial fetch on mount
+        fetchDashboardData();
+        fetchAlertsData();
+
+        // Establish WebSocket for live reloads
+        const ws = new WebSocket('ws://localhost:8000/api/ws/alerts');
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.event === 'REFRESH_ALERTS') {
+                    // Refetch both datasets silently
+                    fetchDashboardData();
+                    fetchAlertsData();
+                }
+            } catch (e) {
+                console.error("WebSocket parse error:", e);
+            }
+        };
+
+        return () => {
+            if (ws.readyState === 1 || ws.readyState === WebSocket.OPEN) {
+                ws.close();
+            }
+        };
     }, []);
 
     return (

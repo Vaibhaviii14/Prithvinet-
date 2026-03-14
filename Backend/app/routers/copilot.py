@@ -40,14 +40,14 @@ Parse the following natural language query and extract the intent for a "What-If
 You MUST return ONLY a valid JSON object with EXACTLY the following structure.
 {{
     "target_entity": "string (e.g., industry name or 'region')",
-    "pollutants": ["list", "of", "strings", "e.g., ['SO2', 'PM2.5', 'NOx']"],
-    "percentage_change": float (e.g., -0.30 for 30% reduction, 0.15 for 15% increase),
+    "shifts": {{"string": float}},
     "scenario_type": "string ('parameter_shift' or 'policy_shutdown')"
 }}
 
 RULES:
-1. If the query implies a direct math change (e.g., "reduce X by Y%"), set "scenario_type": "parameter_shift". Extract all mentioned parameters into the "pollutants" array and "percentage_change" normally.
-2. If the user asks a broad policy question (like "shut down units") and does NOT specifically name a pollutant, you MUST set "pollutants": [] and "scenario_type": "policy_shutdown". Do NOT guess or default to PM2.5. Set "percentage_change": null.
+1. If the query implies a direct math change (e.g., "reduce X by Y%"), set "scenario_type": "parameter_shift". Extract the targeted pollutants and their requested percentage changes. Return a JSON object with a 'shifts' dictionary. Example: For 'Increase pH by 10% and reduce SO2 by 20%', return {{"shifts": {{"pH": 0.10, "SO2": -0.20}}}}. If no specific pollutants are named, return an empty dictionary: {{"shifts": {{}}}}.
+2. If the user asks a broad policy question (like "shut down units") and does NOT specifically name a pollutant, you MUST set "shifts": {{}} and "scenario_type": "policy_shutdown". Do NOT guess or default to PM2.5.
+CRITICAL RULE: If the user asks for a 'complete lockdown' or 'shutdown', limit emission reductions (PM2.5, SO2, NOx, Noise) to a maximum of -0.90 (-90%). Do NOT set shifts to -1.0. For 'pH', a lockdown means a return to neutral (shift towards 7.0), so assign a minimal stabilizing shift (e.g., 0.05 or -0.05) rather than a massive drop.
 
 If any of the fields cannot be determined from the query, set their value to null.
 
@@ -68,8 +68,7 @@ User Query: "{query}"
         # Ensure correct structure
         intent = {
             "target_entity": parsed_json.get("target_entity"),
-            "pollutants": parsed_json.get("pollutants", []),
-            "percentage_change": parsed_json.get("percentage_change"),
+            "shifts": parsed_json.get("shifts", {}),
             "scenario_type": parsed_json.get("scenario_type")
         }
         return intent
@@ -162,29 +161,14 @@ async def ask_copilot(request: CopilotQuery):
         raise HTTPException(status_code=500, detail=str(ve))
     
     print(f"--- COPILOT INTENT ---: {intent}")
-    raw_pollutants = intent.get("pollutants", [])
+    shifts = intent.get("shifts", {})
 
-    # Failsafe if the LLM returns a comma-separated string instead of a list
-    if isinstance(raw_pollutants, str):
-        pollutants = [p.strip() for p in raw_pollutants.replace('[', '').replace(']', '').split(",") if p.strip()]
-    else:
-        pollutants = raw_pollutants
-
-    # Ensure percentage_change is extracted safely
-    pct_change_input = intent.get("percentage_change")
-    if pct_change_input is not None:
-        try:
-            pct_change_input = float(pct_change_input)
-        except ValueError:
-            pct_change_input = -0.20 # Fallback
-            
-    percentage_change = pct_change_input
     scenario_type = intent.get("scenario_type")
     
     seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
 
     # Dynamic Pollutant Discovery
-    if not pollutants and scenario_type == "policy_shutdown":
+    if not shifts and scenario_type == "policy_shutdown":
         match_query: dict[str, Any] = {"timestamp": {"$gte": seven_days_ago}}
         if scope_type == "industry":
             match_query["industry_id"] = scope_id
@@ -233,11 +217,13 @@ async def ask_copilot(request: CopilotQuery):
         
         # safely extract tops
         top_items = sorted_pollutants[:num_to_display]
-        pollutants = [p[0] for p in top_items]
-        logger.info(f"Dynamically discovered critical multivariate pollutants for policy shutdown: {pollutants}")
+        discovered_pollutants = [p[0] for p in top_items]
+        for pol in discovered_pollutants:
+            shifts[pol] = -0.20
+        logger.info(f"Dynamically discovered critical multivariate pollutants for policy shutdown: {list(shifts.keys())}")
 
     # If LLM didn't extract any pollutants, and it wasn't a policy discovery match
-    if not pollutants:
+    if not shifts:
         return CopilotResponse(
             impact="Unknown",
             insight="I couldn't identify specific pollutants to chart. Please specify parameters like PM2.5 or SO2.",
@@ -248,7 +234,7 @@ async def ask_copilot(request: CopilotQuery):
     chart_data = []
     
     # Calculate Impact Iteratively for each Multivariate Pollutant Context
-    for pol in pollutants:
+    for pol, pct_change_input in shifts.items():
         if scenario_type == "policy_shutdown":
             total_regional_baseline, high_risk_contribution = await calculate_high_risk_impact(
                 db, scope_type, scope_id, pol, seven_days_ago
@@ -294,33 +280,35 @@ async def ask_copilot(request: CopilotQuery):
                 print(f"WARNING: No data found in DB for {pol} in scope {scope_id}. Faking baseline for demo.")
                 baseline = 50.0 # Hackathon fallback so the chart never breaks
                 
-            pct_change = float(percentage_change) if percentage_change is not None else 0.0
+            try:
+                pct_change = float(pct_change_input) if pct_change_input is not None else 0.0
+            except ValueError:
+                pct_change = 0.0
             new_baseline = baseline * (1 + pct_change)
             
         multi_forecast_meta[pol] = {"baseline": baseline, "new_baseline": new_baseline, "pct_change": pct_change}
 
     # Generate a Multivariate 24-step forecast array mapping
     forecast_length = 24
-    for i in range(forecast_length):
-        time_label = f"T+{i*3}h"
-        step_data = {"time": time_label}
+    for step_index in range(forecast_length):
+        step_data = {"time": f"T+{step_index*3}h"}
         
-        for pol in pollutants:
-            new_baseline = multi_forecast_meta[pol]["new_baseline"]
+        for pol, meta in multi_forecast_meta.items():
+            new_val = meta.get('new_baseline', 0.0)
             
-            # Recharts requires Flat Key mappings:
-            # ex: {"time": "T+3h", "PM2.5": 240.22, "SO2": 150}
-            if new_baseline > 0:
-                 variation = random.uniform(-0.02, 0.02)
-                 point = new_baseline * (1 + variation)
-                 step_data[pol] = round(point, 2)
+            # Add slight simulated noise, but prevent emissions from dropping below 0
+            noise = random.uniform(-0.02, 0.02) * new_val
+            final_val = round(max(0.0, new_val + noise), 2)
+            
+            # FORCE assign the value to the dictionary
+            step_data[pol] = final_val
                  
         chart_data.append(step_data)
 
     # Convert multivariable JSON forecast into textual insight prompt for synthesis
     summary_parts = []
     for pol, data in multi_forecast_meta.items():
-        summary_parts.append(f"{pol} shifted to {data['new_baseline']:.2f} (change: {data['pct_change']*100:.1f}%).")
+        summary_parts.append(f"{pol} shifted by {data['pct_change']*100:.1f}% to {data['new_baseline']:.2f}.")
     summary_string = " | ".join(summary_parts)
     print(f"--- MEGA INSIGHT STRING ---: {summary_string}")
 

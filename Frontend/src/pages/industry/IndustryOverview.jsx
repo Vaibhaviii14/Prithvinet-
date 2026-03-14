@@ -100,6 +100,24 @@ const IndustryOverview = () => {
 
     useEffect(() => {
         fetchData();
+
+        const ws = new WebSocket('ws://localhost:8000/api/ws/alerts');
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.event === 'REFRESH_ALERTS') {
+                    fetchData();
+                }
+            } catch (e) {
+                console.error("WebSocket parse error:", e);
+            }
+        };
+
+        return () => {
+            if (ws.readyState === 1 || ws.readyState === WebSocket.OPEN) {
+                ws.close();
+            }
+        };
     }, []);
 
     const handleLogSubmitSuccess = () => {

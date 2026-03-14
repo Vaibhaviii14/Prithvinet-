@@ -55,6 +55,21 @@ const InspectorDashboard = () => {
 
     useEffect(() => {
         fetchData();
+
+        const ws = new WebSocket('ws://localhost:8000/api/ws/alerts'); // Adjust URL/port to match environment
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.event === 'REFRESH_ALERTS') {
+                    console.log("⚡ Live Update Received! Refreshing Inspector Dashboard...");
+                    fetchData(); // Call the Monitoring Team's specific fetch function
+                }
+            } catch (err) { console.error(err); }
+        };
+        
+        return () => {
+            if (ws.readyState === 1 || ws.readyState === WebSocket.OPEN) { ws.close(); }
+        };
     }, []);
 
     const handleAddParam = () => setAuditParams([...auditParams, { name: '', value: '' }]);

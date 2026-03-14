@@ -70,6 +70,21 @@ const ROOverview = () => {
 
     useEffect(() => {
         fetchData();
+
+        const ws = new WebSocket('ws://localhost:8000/api/ws/alerts'); // Adjust URL/port to match environment
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.event === 'REFRESH_ALERTS') {
+                    console.log("⚡ Live Update Received! Refreshing RO Dashboard...");
+                    fetchData(); // Call the combined fetch functions here
+                }
+            } catch (err) { console.error(err); }
+        };
+        
+        return () => {
+            if (ws.readyState === 1 || ws.readyState === WebSocket.OPEN) { ws.close(); }
+        };
     }, []);
 
     const handleResolveAlert = async (alertId) => {

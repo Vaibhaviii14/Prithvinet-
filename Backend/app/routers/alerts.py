@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from datetime import datetime, timezone
 from app.utils.telegram_push import send_telegram_alert
 
+from app.utils.websocket_manager import manager
 
 class AlertRespondRequest(BaseModel):
     response_note: str
@@ -102,6 +103,7 @@ async def resolve_alert(
         {"_id": ObjectId(alert_id)},
         {"$set": {"status": "RESOLVED"}}
     )
+    await manager.broadcast({"event": "REFRESH_ALERTS"})
     
     updated_alert = await db.alerts.find_one({"_id": ObjectId(alert_id)})
 
@@ -162,6 +164,7 @@ async def respond_alert(
             }
         }
     )
+    await manager.broadcast({"event": "REFRESH_ALERTS"})
 
     updated_alert = await db.alerts.find_one({"_id": ObjectId(alert_id)})
     
@@ -240,6 +243,7 @@ async def reject_alert(
             }
         }
     )
+    await manager.broadcast({"event": "REFRESH_ALERTS"})
     
     updated_alert = await db.alerts.find_one({"_id": ObjectId(alert_id)})
     
@@ -323,6 +327,7 @@ async def dispatch_alert(
             }
         }
     )
+    await manager.broadcast({"event": "REFRESH_ALERTS"})
     
     updated_alert = await db.alerts.find_one({"_id": ObjectId(alert_id)})
     

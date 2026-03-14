@@ -25,7 +25,7 @@ from app.routes import auth
 
 # Note: Removed the try/except block. It is best practice to have a strict 
 # folder structure. Assuming they are all in routers as discussed previously.
-from app.routers import master, ingestion, alerts, reports, forecast, copilot, public
+from app.routers import master, ingestion, alerts, reports, forecast, copilot, public, ws
 
 app.include_router(auth.router)
 app.include_router(master.router)
@@ -35,6 +35,7 @@ app.include_router(reports.router)
 app.include_router(forecast.router)
 app.include_router(copilot.router)
 app.include_router(public.router)
+app.include_router(ws.router)
 
 # FIX: Renamed collection variables to avoid namespace collision with routers
 readings_collection = db.readings
