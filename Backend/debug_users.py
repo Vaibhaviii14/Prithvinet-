@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 
 load_dotenv()
-uri = os.getenv('MONGO_URI') or "mongodb+srv://prithvinet_user_01:prithvinet_01@cluster0.snlud.mongodb.net/prithvinet?retryWrites=true&w=majority"
+uri = os.getenv('MONGO_URI')
 client = AsyncIOMotorClient(uri)
 db = client.prithvinet
 
