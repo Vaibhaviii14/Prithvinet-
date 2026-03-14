@@ -9,6 +9,8 @@ from app.models.user import UserResponse, UserRole
 from app.models.alerts import AlertResponse
 from pydantic import BaseModel
 from datetime import datetime, timezone
+from app.utils.telegram_push import send_telegram_alert
+
 
 class AlertRespondRequest(BaseModel):
     response_note: str
@@ -117,6 +119,12 @@ async def resolve_alert(
             subject = "RESOLVED: Environmental Alert Closed"
             body = f"<p>Your environmental compliance alert tracking ID <b>{alert_id}</b> has been marked as <strong>RESOLVED</strong> by the regulatory officer.</p>"
             background_tasks.add_task(send_html_email, industry_user["email"], subject, body)
+
+            # --- SPLICED: Telegram Push Notification ---
+            if "telegram_chat_id" in industry_user:
+                tg_msg = f"✅ *ALERT RESOLVED*\n\nYour alert tracking ID *{alert_id}* has been marked as *RESOLVED* by the officer."
+                background_tasks.add_task(send_telegram_alert, industry_user["telegram_chat_id"], tg_msg)
+
         else:
             print(f"Warning: No valid industry user found for entity_id {industry_id}. No RESOLVED email sent.")
 
@@ -173,6 +181,16 @@ async def respond_alert(
                 subject = "UPDATE: Corrective Action Submitted by Industry"
                 body = f"<p>An industry has submitted corrective action for Alert ID <b>{alert_id}</b>.</p><p><b>Industry Response:</b><br/>{payload.response_note}</p><p>Please log in to the portal to review and verify.</p>"
                 background_tasks.add_task(send_html_email, ro_user["email"], subject, body)
+
+                # --- SPLICED: Telegram Push Notification (RO) ---
+                if "telegram_chat_id" in ro_user:
+                    tg_msg = (
+                        f"📝 *UPDATE: Corrective Action*\n\n"
+                        f"An industry has submitted an action plan for Alert *{alert_id}*.\n\n"
+                        f"*Industry Response:* {payload.response_note[:100]}..."
+                    )
+                    background_tasks.add_task(send_telegram_alert, ro_user["telegram_chat_id"], tg_msg)
+
             else:
                 print(f"Warning: No RO user found for region_id {region}. No RO email sent on industry response.")
         else:
@@ -237,6 +255,16 @@ async def reject_alert(
             subject = "URGENT: Corrective Action Rejected by RO"
             body = f"<p>Your recent response to Alert tracking ID <b>{alert_id}</b> has been <strong>REJECTED</strong>.</p><p><b>Officer Feedback:</b><br/>{payload.rejection_reason}</p><p>Please log into the portal to review the feedback and take appropriate action immediately.</p>"
             background_tasks.add_task(send_html_email, industry_user["email"], subject, body)
+
+            # --- SPLICED: Telegram Push Notification ---
+            if "telegram_chat_id" in industry_user:
+                tg_msg = (
+                    f"❌ *ACTION REJECTED*\n\n"
+                    f"Your response to Alert *{alert_id}* was REJECTED.\n\n"
+                    f"*Feedback:* {payload.rejection_reason[:100]}..."
+                )
+                background_tasks.add_task(send_telegram_alert, industry_user["telegram_chat_id"], tg_msg)
+
         else:
             print(f"Warning: No valid industry user found for entity_id {industry_id}. No REJECTED email sent.")
             
@@ -303,5 +331,15 @@ async def dispatch_alert(
         subject = "NEW AUDIT DISPATCH: Physical Inspection Required"
         body = f"<p>You have been dispatched to perform a physical site audit for Alert ID <b>{alert_id}</b>.</p><p>Please log into your Inspector Dashboard for location details and to submit your findings.</p>"
         background_tasks.add_task(send_html_email, mt_member["email"], subject, body)
+
+        # --- SPLICED: Telegram Push Notification ---
+        if "telegram_chat_id" in mt_member:
+            tg_msg = (
+                f"📋 *NEW AUDIT DISPATCH*\n\n"
+                f"You have been assigned to audit Alert *{alert_id}*.\n\n"
+                f"Check your Inspector Dashboard for details."
+            )
+            background_tasks.add_task(send_telegram_alert, mt_member["telegram_chat_id"], tg_msg)
+
         
     return map_id(updated_alert)

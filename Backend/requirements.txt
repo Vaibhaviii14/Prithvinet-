@@ -19,3 +19,7 @@ websockets>=12.0
 
 # LLM integration
 google-generativeai>=0.8.3
+
+# Telegram & Async Requests
+httpx>=0.27.0
+python-telegram-bot>=21.0
