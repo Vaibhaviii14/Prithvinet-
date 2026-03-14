@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, MapPin, Grid, AlertTriangle, Building2, Activity, CheckCircle2, X } from 'lucide-react';
+import { Sparkles, MapPin, Grid, AlertTriangle, Building2, Activity, CheckCircle2, X, Users, Send } from 'lucide-react';
 import api from '../../api/axios';
 import StatusMap from '../../components/maps/StatusMap';
 
@@ -18,14 +18,21 @@ const ROOverview = () => {
     const [rejectionReason, setRejectionReason] = useState('');
     const [submittingReject, setSubmittingReject] = useState(false);
 
+    // Dispatch Modal State
+    const [dispatchModalAlert, setDispatchModalAlert] = useState(null);
+    const [monitoringTeams, setMonitoringTeams] = useState([]);
+    const [selectedTeamId, setSelectedTeamId] = useState('');
+    const [submittingDispatch, setSubmittingDispatch] = useState(false);
+
     const fetchData = async () => {
         try {
             // Fetch Master Data
-            const [locRes, indRes, alertRes, hmRes] = await Promise.all([
+            const [locRes, indRes, alertRes, hmRes, teamsRes] = await Promise.all([
                 api.get('/api/master/locations'),
                 api.get('/api/master/industries'),
                 api.get('/api/alerts'),
-                api.get('/api/reports/map-data')
+                api.get('/api/reports/map-data'),
+                api.get('/api/auth/users?role=monitoring_team')
             ]);
             
             // Unresolved alerts filter (status field is UNRESOLVED or ACTION_TAKEN)
@@ -42,6 +49,9 @@ const ROOverview = () => {
 
             // Map
             setHeatmapData(hmRes.data || []);
+
+            // Teams
+            setMonitoringTeams(teamsRes.data || []);
         } catch (error) {
             console.error("Failed fetching RO Overview data", error.response?.data || error);
         } finally {
@@ -98,6 +108,27 @@ const ROOverview = () => {
             alert(`Failed to reject alert: ${error.response?.data?.detail || 'Unknown error'}`);
         } finally {
             setSubmittingReject(false);
+        }
+    };
+
+    const handleDispatchAlert = async (e) => {
+        e.preventDefault();
+        if (!dispatchModalAlert || !selectedTeamId) return;
+
+        try {
+            setSubmittingDispatch(true);
+            await api.put(`/api/alerts/${dispatchModalAlert.id}/dispatch`, {
+                monitoring_team_id: selectedTeamId
+            });
+
+            await fetchData();
+            setDispatchModalAlert(null);
+            setSelectedTeamId('');
+        } catch (error) {
+            console.error("Failed to dispatch alert", error.response?.data || error);
+            alert(`Failed to dispatch alert: ${error.response?.data?.detail || 'Unknown error'}`);
+        } finally {
+            setSubmittingDispatch(false);
         }
     };
 
@@ -214,6 +245,12 @@ const ROOverview = () => {
                                 {alert.status === 'ACTION_TAKEN' && (
                                     <div className="flex gap-2 w-full mt-3">
                                         <button
+                                            onClick={() => setDispatchModalAlert(alert)}
+                                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500 text-blue-500 hover:text-[#0b1114] font-bold border border-blue-500/30 rounded-lg transition-all text-xs shadow-sm hover:shadow-[0_0_10px_rgba(59,130,246,0.4)]"
+                                        >
+                                            <Send className="w-4 h-4" /> Dispatch Inspector
+                                        </button>
+                                        <button
                                             onClick={() => setSelectedRejectAlert(alert)}
                                             className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-[#0b1114] font-bold border border-rose-500/30 rounded-lg transition-all text-xs shadow-sm"
                                         >
@@ -221,7 +258,7 @@ const ROOverview = () => {
                                         </button>
                                         <button
                                             onClick={() => handleResolveAlert(alert.id)}
-                                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-[#0b1114] font-bold border border-emerald-500/30 rounded-lg transition-all text-xs shadow-sm hover:shadow-[0_0_10px_rgba(0,230,118,0.4)]"
+                                            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-[#0b1114] font-bold border border-emerald-500/30 rounded-lg transition-all text-xs shadow-sm"
                                         >
                                             <CheckCircle2 className="w-4 h-4" /> Verify
                                         </button>
@@ -260,6 +297,43 @@ const ROOverview = () => {
                                 <button type="button" onClick={() => setSelectedRejectAlert(null)} className="px-4 py-2 font-semibold text-slate-400 text-sm">Cancel</button>
                                 <button type="submit" disabled={submittingReject} className="px-5 py-2 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-lg text-sm flex items-center gap-2">
                                     {submittingReject ? <Activity className="w-4 h-4 animate-spin" /> : 'Confirm Reject'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Dispatch Modal */}
+            {dispatchModalAlert && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+                    <div className="bg-[#1a2327] border border-[#263238] rounded-2xl p-6 shadow-2xl w-full max-w-lg relative">
+                        <button onClick={() => setDispatchModalAlert(null)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+                            <X className="w-5 h-5" />
+                        </button>
+                        
+                        <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                            <Users className="w-5 h-5 text-blue-500" /> Dispatch Inspector
+                        </h2>
+                        <p className="text-sm text-slate-400 mb-6">Assign an active Monitoring Team member to physically inspect the facility for the {dispatchModalAlert.parameter} breach.</p>
+                        
+                        <form onSubmit={handleDispatchAlert}>
+                            <select
+                                required
+                                className="w-full bg-[#0b1114] border border-[#263238] rounded-xl p-3 text-white focus:ring-1 focus:ring-blue-500 mb-6"
+                                value={selectedTeamId}
+                                onChange={(e) => setSelectedTeamId(e.target.value)}
+                            >
+                                <option value="" disabled>Select a Monitoring Team Member...</option>
+                                {monitoringTeams.map(member => (
+                                    <option key={member.id} value={member.id}>{member.email}</option>
+                                ))}
+                            </select>
+                            
+                            <div className="flex justify-end gap-3">
+                                <button type="button" onClick={() => setDispatchModalAlert(null)} className="px-4 py-2 font-semibold text-slate-400 text-sm">Cancel</button>
+                                <button type="submit" disabled={submittingDispatch} className="px-5 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg text-sm flex items-center gap-2">
+                                    {submittingDispatch ? <Activity className="w-4 h-4 animate-spin" /> : 'Confirm Dispatch'}
                                 </button>
                             </div>
                         </form>

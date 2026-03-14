@@ -27,8 +27,8 @@ import IndustryOverview from './pages/industry/IndustryOverview';
 import IndustryLogs from './pages/industry/IndustryLogs';
 import IndustryAlerts from './pages/industry/IndustryAlerts';
 
-// Placeholder components for other dashboards
-const MonitoringDashboard = () => <div className="p-8 text-white min-h-screen bg-[#0b1114]"><h1>Monitoring Dashboard</h1></div>;
+import InspectorDashboard from './pages/monitoring/InspectorDashboard';
+
 const PublicPortal = () => <div className="p-8 text-white min-h-screen bg-[#0b1114]"><h1>Public Portal (Citizens)</h1></div>;
 
 function App() {
@@ -68,7 +68,7 @@ function App() {
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['monitoring_team', 'super_admin']} />}>
-            <Route path="/monitoring-dashboard" element={<MonitoringDashboard />} />
+            <Route path="/monitoring-dashboard" element={<InspectorDashboard />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['industry']} />}>

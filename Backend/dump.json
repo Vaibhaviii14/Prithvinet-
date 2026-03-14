@@ -1,0 +1,152 @@
+{
+  "users": [
+    {
+      "_id": {
+        "$oid": "69a9a5b39eff9dca7acb368e"
+      },
+      "email": "meranaam@gmail.com",
+      "hashed_password": "$2b$12$VH8gDrOE9xbB0VhnC8TyGu/SHdOhwBXx2uDeRYL9owQ3g3OPHDiri",
+      "role": "super_admin",
+      "is_active": true,
+      "region_id": "STATE_HQ",
+      "entity_id": null
+    },
+    {
+      "_id": {
+        "$oid": "69a9aa4280fc8f8f6d166671"
+      },
+      "email": "rokaemail@gmail.com",
+      "hashed_password": "$2b$12$Rn11VS4E4CTGxGtSRwT3Subt.tpDid0IV9xr5g2X6osffyZUmCygu",
+      "role": "ro",
+      "is_active": true,
+      "region_id": "indore",
+      "entity_id": "string"
+    },
+    {
+      "_id": {
+        "$oid": "69a9aacd80fc8f8f6d166672"
+      },
+      "email": "industrykaemail@gmail.com",
+      "hashed_password": "$2b$12$fUcWxO2f70oruERsRhLWluHg.DdUtG08K4QUdnV3FqKOmFkd3PwPm",
+      "role": "industry",
+      "is_active": true,
+      "region_id": "string",
+      "entity_id": "string"
+    },
+    {
+      "_id": {
+        "$oid": "69a9ab6680fc8f8f6d166673"
+      },
+      "email": "monitoringkaemail@gmail.com",
+      "hashed_password": "$2b$12$VQtxi3C7GPWisHkMoPyHrupuN/H1GCDsZinXYe1/zeSZywJAplJnG",
+      "role": "monitoring_team",
+      "is_active": true,
+      "region_id": "string",
+      "entity_id": "string"
+    },
+    {
+      "_id": {
+        "$oid": "69a9ab9480fc8f8f6d166674"
+      },
+      "email": "maicitizenhu@gmail.com",
+      "hashed_password": "$2b$12$sIGMUusn3PEJxhDcWXT9JOVg/dF8FlfPymvNrRf0ayoCo/tsjj5Su",
+      "role": "citizen",
+      "is_active": true,
+      "region_id": null,
+      "entity_id": null
+    },
+    {
+      "_id": {
+        "$oid": "69ae7bbd7bc8f7d6484eb215"
+      },
+      "email": "ro1kaemail@gmail.com",
+      "hashed_password": "$2b$12$6WRsQY4eEJc5rqrMDgHTjOLMzgxXu/pBcVQ195sAX.IGecy8eBmly",
+      "role": "ro",
+      "is_active": true,
+      "region_id": "69ae7b7a7bc8f7d6484eb214",
+      "entity_id": null
+    },
+    {
+      "_id": {
+        "$oid": "69ae7d707bc8f7d6484eb217"
+      },
+      "email": "admin@bhopalsteel.com",
+      "hashed_password": "$2b$12$GPUkraEqGcplCSMQgUIxBe9J5BI49a8OGLIYaC.V5t9ZRCpGpdo7m",
+      "role": "industry",
+      "is_active": true,
+      "region_id": "69ae7b7a7bc8f7d6484eb214",
+      "entity_id": "69ae7ce57bc8f7d6484eb216"
+    },
+    {
+      "_id": {
+        "$oid": "69b3a3b3550dfcd479f58c78"
+      },
+      "email": "ro2kaemail@gmail.com",
+      "hashed_password": "$2b$12$Hu.q.A5ZcoFHpWXu3OY1J.xdNjjRJt/rAPOFkuDpJcnb2n/.Jxlue",
+      "role": "ro",
+      "is_active": true,
+      "region_id": "69b3a360550dfcd479f58c77",
+      "entity_id": null
+    },
+    {
+      "_id": {
+        "$oid": "69b3a590550dfcd479f58c7a"
+      },
+      "email": "rahulsahuppd@gmail.com",
+      "hashed_password": "$2b$12$49MZnvRKKM1Vk/z6PGN7auRIYpgFcCUbquaySGfrSH4ZbNv7rKjnS",
+      "role": "industry",
+      "is_active": true,
+      "region_id": "69b3a360550dfcd479f58c77",
+      "entity_id": "69b3a4fb550dfcd479f58c79"
+    },
+    {
+      "_id": {
+        "$oid": "69b3ba7d550dfcd479f58c7b"
+      },
+      "email": "monitoring1kaemail@gmail.com",
+      "hashed_password": "$2b$12$wfeg34.i64idjUwmAprKV.iYgwUp6lIY8wX6alsYJlgubAQA7bpO2",
+      "role": "monitoring_team",
+      "is_active": true,
+      "region_id": "69ae7b7a7bc8f7d6484eb214",
+      "entity_id": null
+    }
+  ],
+  "industries": [
+    {
+      "_id": {
+        "$oid": "69ae66a3ec0bc8165e11097a"
+      },
+      "name": "Bhopal Steel Plant",
+      "industry_type": "Manufacturing",
+      "region_id": "69ae6623ec0bc8165e110979",
+      "status": "Active"
+    },
+    {
+      "_id": {
+        "$oid": "69ae78cc7bc8f7d6484eb212"
+      },
+      "name": "Indore ka industry",
+      "industry_type": "Ceramic",
+      "region_id": "indore",
+      "status": "Active"
+    },
+    {
+      "_id": {
+        "$oid": "69ae7ce57bc8f7d6484eb216"
+      },
+      "name": "Bhopal Steel Plant",
+      "industry_type": "Manufacturing",
+      "region_id": "69ae7b7a7bc8f7d6484eb214",
+      "status": "Active"
+    },
+    {
+      "_id": {
+        "$oid": "69b3a4fb550dfcd479f58c79"
+      },
+      "name": "cgkamining",
+      "industry_type": "ceramic",
+      "region_id": "69b3a360550dfcd479f58c77",
+      "status": "Active"
+    }
+  ]
+}
