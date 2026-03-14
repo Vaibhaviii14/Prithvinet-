@@ -32,6 +32,7 @@ async def process_compliance_and_alerts(log_id_str: str, log_data_dict: dict, ba
     2. Check regulatory limits
     3. Generate alerts in DB
     4. Notify Industry & RO (Email + Telegram)
+    5. Broadcast WebSocket live updates
     """
     category = log_data_dict.get("category")
     parameters = log_data_dict.get("parameters", {})
@@ -58,6 +59,7 @@ async def process_compliance_and_alerts(log_id_str: str, log_data_dict: dict, ba
                 "message": f"Anomaly Detected! {anomaly_result['pollutant']} spiked to {anomaly_result['value']}, heavily deviating from normal."
             }
             await db.alerts.insert_one(alert_doc)
+            await manager.broadcast({"event": "REFRESH_ALERTS"}) # LIVE SYNC BROADCAST
     except Exception as e:
         print(f"AI Anomaly Check Failed: {e}")
 
@@ -84,6 +86,7 @@ async def process_compliance_and_alerts(log_id_str: str, log_data_dict: dict, ba
                     "timestamp": datetime.now(timezone.utc)
                 }
                 await db.alerts.insert_one(alert_doc)
+                await manager.broadcast({"event": "REFRESH_ALERTS"}) # LIVE SYNC BROADCAST
                 alerts_triggered.append({"type": "COMPLIANCE", "param": param, "value": value, "limit": limits_map[param]})
         else:
             # Limit Missing Notification (Super Admin)
@@ -101,6 +104,7 @@ async def process_compliance_and_alerts(log_id_str: str, log_data_dict: dict, ba
                 "timestamp": datetime.now(timezone.utc)
             }
             await db.alerts.insert_one(alert_doc)
+            await manager.broadcast({"event": "REFRESH_ALERTS"}) # LIVE SYNC BROADCAST
             alerts_triggered.append({"type": "LIMIT_MISSING", "param": param, "value": value})
 
     # 3. NOTIFICATIONS
@@ -137,14 +141,11 @@ async def process_compliance_and_alerts(log_id_str: str, log_data_dict: dict, ba
                                     f"Parameter: {alert['param']}\n"
                                     f"Value: {alert['value']} (Limit: {alert['limit']})"
                                 )
-                                
-                                # Add an inline button to simulate a "Popup" experience
                                 inline_kb = {
                                     "inline_keyboard": [[
-                                        {"text": "🚀 VIEW DETAILS", "callback_data": f"popup_alert_{param}_{value}"}
+                                        {"text": "🚀 VIEW DETAILS", "callback_data": f"popup_alert_{alert['param']}_{alert['value']}"}
                                     ]]
                                 }
-                                
                                 if background_tasks: 
                                     background_tasks.add_task(send_telegram_alert, ro_user["telegram_chat_id"], tg_msg, inline_kb)
                                 else:
@@ -175,139 +176,17 @@ async def create_manual_log(
     if "timestamp" not in data_dict or data_dict["timestamp"] is None:
         data_dict["timestamp"] = datetime.now(timezone.utc)
 
-    # Save the log to the database
+    # 1. Save the log to the database
     new_log = await db.pollution_logs.insert_one(data_dict)
     log_id_str = str(new_log.inserted_id)
 
-    # Run Centralized Processing Logic (AI + Compliance + Notifications)
+    # 2. Run Centralized Processing Logic (AI + Compliance + Notifications + WebSockets)
     await process_compliance_and_alerts(log_id_str, data_dict, background_tasks)
-    # ---------------------------------------------------------
-    # SPLICED AI LOGIC 2: Save the Anomaly Alert
-    # ---------------------------------------------------------
-    if anomaly_result.get("is_anomaly"):
-        alert_doc = {
-            "industry_id": log_data.industry_id,
-            "location_id": str(location_id),
-            "category": log_data.category,
-            "parameter": anomaly_result['pollutant'],
-            "exceeded_value": anomaly_result['value'],
-            "allowed_value": anomaly_result['mean'],
-            "status": "UNRESOLVED",
-            "alert_type": "STATISTICAL_ANOMALY", # Matches teammate schema
-            "type": "statistical_anomaly",       # Matches your UI logic
-            "severity": "WARNING",
-            "log_id": log_id_str,                # Attached the new log ID!
-            "timestamp": datetime.now(timezone.utc),
-            "message": f"Anomaly Detected! {anomaly_result['pollutant']} spiked to {anomaly_result['value']}, heavily deviating from the 24h normal average of {anomaly_result['mean']}."
-        }
-        await db.alerts.insert_one(alert_doc)
-        await manager.broadcast({"event": "REFRESH_ALERTS"})
-        print("SUCCESS: Anomaly alert inserted into MongoDB!")
-
-    # ---------------------------------------------------------
-    # HACKATHON TEAM LOGIC: Standard Breaches & Emails
-    # ---------------------------------------------------------
-    # Query limits collection for the corresponding category
-    limits_cursor = db.prescribed_limits.find({"category": log_data.category})
-    limits = await limits_cursor.to_list(length=100)
-    limits_map = {limit["parameter"]: limit["max_allowed_value"] for limit in limits}
-
-    alerts_triggered = []
-
-    # If any parameter in the reading exceeds the max_allowed_value, insert a new alert
-    for param, value in log_data.parameters.items():
-        if param in limits_map:
-            if value > limits_map[param]:
-                alert_doc = {
-                    "industry_id": log_data.industry_id,
-                    "location_id": log_data.location_id,
-                    "category": log_data.category,
-                    "parameter": param,
-                    "exceeded_value": value,
-                    "allowed_value": limits_map[param],
-                    "status": "UNRESOLVED",
-                    "alert_type": "COMPLIANCE",
-                    "type": "threshold_breach",
-                    "log_id": log_id_str,
-                    "timestamp": datetime.now(timezone.utc)
-                }
-                await db.alerts.insert_one(alert_doc)
-                await manager.broadcast({"event": "REFRESH_ALERTS"})
-                alerts_triggered.append({
-                    "type": "COMPLIANCE",
-                    "param": param,
-                    "value": value,
-                    "limit": limits_map[param]
-                })
-        else:
-            # New Parameter with no limit set - Notify Super Admin
-            unit = None
-            if log_data.parameter_units:
-                unit = log_data.parameter_units.get(param)
-                
-            alert_doc = {
-                "industry_id": log_data.industry_id,
-                "location_id": log_data.location_id,
-                "category": log_data.category,
-                "parameter": param,
-                "exceeded_value": value,
-                "allowed_value": 0, # No limit set
-                "status": "UNRESOLVED",
-                "alert_type": "LIMIT_MISSING",
-                "type": "limit_missing",
-                "unit": unit,
-                "log_id": log_id_str,
-                "timestamp": datetime.now(timezone.utc)
-            }
-            await db.alerts.insert_one(alert_doc)
-            await manager.broadcast({"event": "REFRESH_ALERTS"})
-            alerts_triggered.append({
-                "type": "LIMIT_MISSING",
-                "param": param,
-                "value": value,
-                "unit": unit
-            })
-
-    # Email Notifications (sent once per log if any alert triggered)
-    if alerts_triggered and log_data.industry_id:
-        try:
-            industry_id = log_data.industry_id
-            industry_object_id = ObjectId(industry_id) if ObjectId.is_valid(industry_id) else industry_id
-            
-            # Fetch Industry and User Details
-            industry_user = await db.users.find_one({"entity_id": str(industry_object_id)})
-            industry_details = await db.industries.find_one({"_id": industry_object_id})
-            
-            if industry_user and "email" in industry_user:
-                for alert in alerts_triggered:
-                    if alert["type"] == "COMPLIANCE":
-                        subject = "CRITICAL: Prescribed Emission Limit Breached"
-                        body = f"<p>A critical alert has been raised for your facility.</p><p><b>Parameter:</b> {alert['param']}<br/><b>Recorded Value:</b> {alert['value']}<br/><b>Prescribed Limit:</b> {alert['limit']}</p><p>Please log into the portal immediately to submit a corrective action plan.</p>"
-                    else:
-                        subject = "NOTICE: New Parameter Logged (No Policy Set)"
-                        body = f"<p>You have logged a new parameter (<b>{alert['param']}</b>) for which no regulatory limit is currently set.</p><p><b>Recorded Value:</b> {alert['value']} {alert.get('unit', '')}</p><p>The regulator has been notified to define the prescribed limit for this parameter.</p>"
-                    
-                    background_tasks.add_task(send_html_email, industry_user["email"], subject, body)
-
-            # Notify RO if it's a compliance breach
-            if industry_details and "region_id" in industry_details:
-                region = industry_details["region_id"]
-                ro_user = await db.users.find_one({"role": {"$in": ["ro", "RO"]}, "region_id": str(region)})
-                
-                if ro_user and "email" in ro_user:
-                    industry_name = industry_details.get("name", "Unknown Facility")
-                    for alert in alerts_triggered:
-                        if alert["type"] == "COMPLIANCE":
-                            subject = f"ALERT: Violation at {industry_name}"
-                            body = f"<p>A critical emission limit violation has been recorded at <strong>{industry_name}</strong>.</p><p><b>Parameter:</b> {alert['param']}<br/><b>Recorded Value:</b> {alert['value']}<br/><b>Prescribed Limit:</b> {alert['limit']}</p><p>Please review the corrective action plan in your dashboard.</p>"
-                            background_tasks.add_task(send_html_email, ro_user["email"], subject, body)
-        except Exception as e:
-            print(f"Error in notification background task setup: {e}")
 
     created_log = await db.pollution_logs.find_one({"_id": new_log.inserted_id})
     return map_id(created_log)
 
-
+# ... Keep the rest of your file (@router.delete, @router.get, @router.websocket) exactly as it was!
 @router.delete("/logs/{log_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_log(
     log_id: str,
@@ -352,10 +231,6 @@ async def get_logs(
     """
     Fetch historical pollution logs.
     Supports filtering by location_id, category, and date range.
-    RBAC Filtering:
-    - industry: only sees their own logs.
-    - ro: sees logs from industries in their region.
-    - super_admin: full access.
     """
     query = {}
     
@@ -370,19 +245,16 @@ async def get_logs(
         region_industry_ids = [str(ind["_id"]) for ind in industries]
         
         if industry_id:
-            # If specifically requesting an industry, ensure it belongs to their region
             if industry_id in region_industry_ids:
                 query["industry_id"] = industry_id
             else:
-                return [] # Not authorized to view this industry's logs
+                return [] 
         else:
             query["industry_id"] = {"$in": region_industry_ids}
     elif user_role == UserRole.SUPER_ADMIN.value:
         if industry_id:
             query["industry_id"] = industry_id
     else:
-        # For other roles (like citizen or monitoring_team), just use the provided ID if any
-        # Or you could restrict their access if required. We will respect the parameter.
         if industry_id:
             query["industry_id"] = industry_id
 
@@ -402,52 +274,3 @@ async def get_logs(
     cursor = db.pollution_logs.find(query).sort("timestamp", -1)
     logs = await cursor.to_list(length=100)
     return [map_id(log) for log in logs]
-
-# ==========================================
-# WebSocket Routes
-# ==========================================
-
-@router.websocket("/live/{location_id}")
-async def websocket_IoT_endpoint(websocket: WebSocket, location_id: str):
-    """
-    WebSocket endpoint for live IoT streams.
-    IoT devices can connect here to push continuous metrics.
-    """
-    await websocket.accept()
-    try:
-        while True:
-            # Await JSON payload from the IoT device
-            data = await websocket.receive_json()
-            
-            # Construct the log entry. We force the source to "IoT"
-            # and inject the location_id from the URL connection.
-            log_entry = {
-                "location_id": location_id,
-                "industry_id": data.get("industry_id"),
-                "category": data.get("category", "Unknown"),
-                "parameters": data.get("parameters", {}),
-                "source": "IoT",
-                "timestamp": datetime.now(timezone.utc)
-            }
-            
-            # Insert the record directly into the database
-            new_log = await db.pollution_logs.insert_one(log_entry)
-            log_id_str = str(new_log.inserted_id)
-
-            # --- SPLICED: Real-time Cloud Analysis for IoT ---
-            await process_compliance_and_alerts(log_id_str, log_entry)
-            
-            # Send back acknowledgment
-
-            await websocket.send_json({"status": "success", "message": "Log received and saved", "location_id": location_id})
-            
-    except WebSocketDisconnect:
-        # Client gracefully closed the connection or dropped off
-        print(f"IoT Device at Location {location_id} disconnected.")
-    except Exception as e:
-        # Catch unexpected errors (like invalid JSON)
-        print(f"Error in IoT WebSocket for Location {location_id}: {e}")
-        try:
-            await websocket.close()
-        except:
-            pass

@@ -4,6 +4,7 @@ import api from '../../api/axios';
 import StatusMap from '../../components/maps/StatusMap';
 
 const ROOverview = () => {
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [stats, setStats] = useState({
         activeAlerts: 0,
         totalLocations: 0,
@@ -68,16 +69,20 @@ const ROOverview = () => {
         }
     };
 
+    // The Data Fetching Effect
     useEffect(() => {
         fetchData();
+    }, [refreshTrigger]);
 
+    // The WebSocket Effect
+    useEffect(() => {
         const ws = new WebSocket('ws://localhost:8000/api/ws/alerts'); // Adjust URL/port to match environment
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
                 if (data.event === 'REFRESH_ALERTS') {
                     console.log("⚡ Live Update Received! Refreshing RO Dashboard...");
-                    fetchData(); // Call the combined fetch functions here
+                    setRefreshTrigger(prev => prev + 1); // Trigger state change instead of stale fetch call
                 }
             } catch (err) { console.error(err); }
         };
