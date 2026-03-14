@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import StatusMap from '../../components/maps/StatusMap';
-import { AlertCircle, TrendingUp, Sparkles, MapPin, Building2, Factory, ShieldCheck, Clock } from 'lucide-react';
+import { AlertCircle, TrendingUp, Sparkles, MapPin, Building2, Factory, ShieldCheck, Clock, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Overview = () => {
@@ -150,25 +150,35 @@ const Overview = () => {
                                 <div className="space-y-3 overflow-y-auto max-h-[400px] pr-1">
                                     {alerts.map((alert) => {
                                         const isMissingLimit = alert.alert_type === 'LIMIT_MISSING';
+                                        // SPLICED: Anomaly check added!
+                                        const isAnomaly = alert.type === 'statistical_anomaly' || alert.alert_type === 'STATISTICAL_ANOMALY';
                                         
                                         return (
-                                            <div key={alert.id} className={`bg-[#0b1114] border rounded-lg p-3 flex flex-col gap-2 transition-colors hover:border-slate-600 ${isMissingLimit ? 'border-blue-500/40 bg-blue-500/5' : 'border-[#263238]'}`}>
+                                            <div key={alert.id} className={`bg-[#0b1114] border rounded-lg p-3 flex flex-col gap-2 transition-colors hover:border-slate-600 ${isMissingLimit ? 'border-blue-500/40 bg-blue-500/5' : isAnomaly ? 'border-amber-500/40 bg-amber-500/5' : 'border-[#263238]'}`}>
                                                 <div className="flex justify-between items-start">
                                                     <div>
-                                                        <p className="text-sm font-bold text-slate-200">
+                                                        <p className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
+                                                            {isAnomaly && <Activity className="w-4 h-4 text-amber-500" />}
                                                             {alert.industry_name || alert.location_name || 'Industrial Facility'}
                                                         </p>
                                                         <p className="text-xs text-slate-400 mt-0.5">
                                                             {isMissingLimit ? (
                                                                 <>New Param: <span className="text-blue-400 font-bold">{alert.parameter}</span> {alert.unit ? `(${alert.unit})` : ''}</>
+                                                            ) : isAnomaly ? (
+                                                                <>Warning: <span className="text-amber-500 font-bold">Statistical Anomaly</span></>
                                                             ) : (
                                                                 <>Parameter: <span className="text-white font-mono font-bold">{alert.parameter}</span></>
                                                             )}
                                                         </p>
                                                     </div>
+                                                    
                                                     {isMissingLimit ? (
                                                         <span className="bg-blue-500/10 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-blue-500/20 whitespace-nowrap">
                                                             Limit Missing
+                                                        </span>
+                                                    ) : isAnomaly ? (
+                                                        <span className="bg-amber-500/10 text-amber-500 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-amber-500/20 whitespace-nowrap">
+                                                            Anomaly Detected
                                                         </span>
                                                     ) : alert.status === 'UNRESOLVED' ? (
                                                         <span className="bg-red-500/10 text-red-500 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-red-500/20 whitespace-nowrap">
@@ -200,8 +210,15 @@ const Overview = () => {
                                                             <Clock className="w-3 h-3" />
                                                             {new Date(alert.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                                                         </div>
-                                                        <div className="text-[10px] text-slate-500">
-                                                            Limit: {alert.allowed_value}
+                                                        <div className="text-[10px] text-slate-500 text-right">
+                                                            {isAnomaly ? (
+                                                                <span className="font-bold text-amber-500">Val: {alert.exceeded_value || alert.value}</span>
+                                                            ) : (
+                                                                <>
+                                                                    <div className="font-bold text-slate-300">Val: {alert.exceeded_value || alert.value}</div>
+                                                                    Limit: {alert.allowed_value}
+                                                                </>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 )}

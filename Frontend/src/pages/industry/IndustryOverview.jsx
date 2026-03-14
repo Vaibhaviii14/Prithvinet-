@@ -226,56 +226,71 @@ const IndustryOverview = () => {
                                     <p>All clear. No active alerts.</p>
                                 </div>
                             ) : (
-                                alerts.map(alert => (
-                                    <div key={alert.id} className="bg-[#0b1114] border border-[#263238] rounded-xl p-4">
-                                        <div className="flex items-start justify-between mb-3">
-                                            <div className="flex items-center gap-2">
-                                                {alert.status === 'UNRESOLVED' ? (
-                                                    <AlertTriangle className="w-5 h-5 text-red-500" />
-                                                ) : (
-                                                    <Clock className="w-5 h-5 text-yellow-500" />
-                                                )}
-                                                <h4 className="font-bold text-white text-sm">{alert.parameter} Breach</h4>
+                                alerts.map(alert => {
+                                    // SPLICED: Safe check for AI Anomaly
+                                    const isAnomaly = alert?.type === 'statistical_anomaly' || alert?.alert_type === 'STATISTICAL_ANOMALY';
+                                    
+                                    return (
+                                        <div key={alert.id} className={`bg-[#0b1114] border rounded-xl p-4 transition-colors ${isAnomaly ? 'border-amber-500/30 hover:border-amber-500/60 bg-amber-500/5' : 'border-[#263238] hover:border-slate-600'}`}>
+                                            <div className="flex items-start justify-between mb-3">
+                                                <div className="flex items-center gap-2">
+                                                    {isAnomaly ? (
+                                                        <Activity className="w-5 h-5 text-amber-500" />
+                                                    ) : alert.status === 'UNRESOLVED' ? (
+                                                        <AlertTriangle className="w-5 h-5 text-red-500" />
+                                                    ) : (
+                                                        <Clock className="w-5 h-5 text-yellow-500" />
+                                                    )}
+                                                    <h4 className={`font-bold text-sm ${isAnomaly ? 'text-amber-500' : 'text-white'}`}>
+                                                        {isAnomaly ? 'Statistical Anomaly' : `${alert.parameter} Breach`}
+                                                    </h4>
+                                                </div>
+                                                <span className="text-[10px] text-slate-500">{new Date(alert.timestamp).toLocaleDateString()}</span>
                                             </div>
-                                            <span className="text-[10px] text-slate-500">{new Date(alert.timestamp).toLocaleDateString()}</span>
-                                        </div>
-                                        
-                                        <div className="mb-4">
-                                            <p className="text-xs text-slate-400">Recorded Limit Exceeded: <span className="text-red-400 font-bold">{alert.exceeded_value}</span></p>
-                                        </div>
-
-                                        {alert.status === 'UNRESOLVED' ? (
-                                            <>
-                                                {alert.ro_feedback && (
-                                                    <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-3 mb-3">
-                                                        <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider mb-1">Response Rejected by RO</p>
-                                                        <p className="text-xs text-slate-300">"{alert.ro_feedback}"</p>
-                                                    </div>
-                                                )}
-                                                <button 
-                                                    onClick={() => setSelectedAlert(alert)}
-                                                    className="w-full py-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/30 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5"
-                                                >
-                                                    <MessageSquare className="w-4 h-4" /> Respond to Alert
-                                                </button>
-                                            </>
-                                        ) : alert.status === 'INSPECTION_PENDING' ? (
-                                            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                                                <h5 className="text-[11px] font-bold text-blue-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                                    <Activity className="w-4 h-4" /> Physical Inspection Dispatched
-                                                </h5>
-                                                <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                                                    Notice: A physical site inspection has been initiated by the Regional Office. Please cooperate with the monitoring team when they arrive at your facility.
+                                            
+                                            <div className="mb-4">
+                                                <p className={`text-xs ${isAnomaly ? 'text-amber-500 font-medium' : 'text-slate-400'}`}>
+                                                    {isAnomaly ? (
+                                                        alert.message || "Anomaly detected in data baseline."
+                                                    ) : (
+                                                        <>Recorded Limit Exceeded: <span className="text-red-400 font-bold">{alert.exceeded_value}</span></>
+                                                    )}
                                                 </p>
                                             </div>
-                                        ) : (
-                                            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
-                                                <p className="text-[10px] font-bold text-yellow-500 uppercase tracking-wider mb-1">Pending RO Verification</p>
-                                                <p className="text-xs text-slate-300 italic">"{alert.industry_response}"</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))
+
+                                            {alert.status === 'UNRESOLVED' ? (
+                                                <>
+                                                    {alert.ro_feedback && (
+                                                        <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-3 mb-3">
+                                                            <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider mb-1">Response Rejected by RO</p>
+                                                            <p className="text-xs text-slate-300">"{alert.ro_feedback}"</p>
+                                                        </div>
+                                                    )}
+                                                    <button 
+                                                        onClick={() => setSelectedAlert(alert)}
+                                                        className={`w-full py-2 border rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${isAnomaly ? 'bg-amber-500/10 text-amber-500 border-amber-500/30 hover:bg-amber-500 hover:text-slate-900' : 'bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border-red-500/30'}`}
+                                                    >
+                                                        <MessageSquare className="w-4 h-4" /> Respond to Alert
+                                                    </button>
+                                                </>
+                                            ) : alert.status === 'INSPECTION_PENDING' ? (
+                                                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                                                    <h5 className="text-[11px] font-bold text-blue-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                                        <Activity className="w-4 h-4" /> Physical Inspection Dispatched
+                                                    </h5>
+                                                    <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                                                        Notice: A physical site inspection has been initiated by the Regional Office. Please cooperate with the monitoring team when they arrive at your facility.
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                                                    <p className="text-[10px] font-bold text-yellow-500 uppercase tracking-wider mb-1">Pending RO Verification</p>
+                                                    <p className="text-xs text-slate-300 italic">"{alert.industry_response}"</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                })
                             )}
                         </div>
                     </div>
@@ -298,7 +313,7 @@ const IndustryOverview = () => {
                         </button>
                         
                         <h2 className="text-xl font-bold text-white mb-2">Submit Corrective Action</h2>
-                        <p className="text-sm text-slate-400 mb-6">Provide actions taken for the {selectedAlert.parameter} breach.</p>
+                        <p className="text-sm text-slate-400 mb-6">Provide actions taken for the {selectedAlert.type === 'statistical_anomaly' || selectedAlert.alert_type === 'STATISTICAL_ANOMALY' ? 'statistical anomaly' : `${selectedAlert.parameter} breach`}.</p>
                         
                         <form onSubmit={handleRespond}>
                             <textarea

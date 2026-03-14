@@ -9,6 +9,7 @@ from app.dependencies import get_current_active_user, RoleChecker
 from app.models.user import UserResponse
 from app.models.ingestion import PollutionLogCreate, PollutionLogResponse
 from app.models.user import UserRole
+from app.ml.anomaly import detect_anomaly  # <-- SPLICED: Your AI Engine Import
 
 router = APIRouter(prefix="/api/ingestion", tags=["Data Ingestion"])
 
@@ -39,9 +40,45 @@ async def create_manual_log(
     if "timestamp" not in data_dict or data_dict["timestamp"] is None:
         data_dict["timestamp"] = datetime.now(timezone.utc)
 
+    # ---------------------------------------------------------
+    # SPLICED AI LOGIC 1: Run Math BEFORE saving the log to DB
+    # ---------------------------------------------------------
+    location_id = log_data.location_id
+    parameters = log_data.parameters
+
+    print(f"--- RUNNING ANOMALY CHECK FOR LOCATION {location_id} ---")
+    anomaly_result = await detect_anomaly(db, str(location_id), parameters)
+    print(f"ANOMALY RESULT: {anomaly_result}")
+
+    # Now, save the log to the database
     new_log = await db.pollution_logs.insert_one(data_dict)
     log_id_str = str(new_log.inserted_id)
-    
+
+    # ---------------------------------------------------------
+    # SPLICED AI LOGIC 2: Save the Anomaly Alert
+    # ---------------------------------------------------------
+    if anomaly_result.get("is_anomaly"):
+        alert_doc = {
+            "industry_id": log_data.industry_id,
+            "location_id": str(location_id),
+            "category": log_data.category,
+            "parameter": anomaly_result['pollutant'],
+            "exceeded_value": anomaly_result['value'],
+            "allowed_value": anomaly_result['mean'],
+            "status": "UNRESOLVED",
+            "alert_type": "STATISTICAL_ANOMALY", # Matches teammate schema
+            "type": "statistical_anomaly",       # Matches your UI logic
+            "severity": "WARNING",
+            "log_id": log_id_str,                # Attached the new log ID!
+            "timestamp": datetime.now(timezone.utc),
+            "message": f"Anomaly Detected! {anomaly_result['pollutant']} spiked to {anomaly_result['value']}, heavily deviating from the 24h normal average of {anomaly_result['mean']}."
+        }
+        await db.alerts.insert_one(alert_doc)
+        print("SUCCESS: Anomaly alert inserted into MongoDB!")
+
+    # ---------------------------------------------------------
+    # HACKATHON TEAM LOGIC: Standard Breaches & Emails
+    # ---------------------------------------------------------
     # Query limits collection for the corresponding category
     limits_cursor = db.prescribed_limits.find({"category": log_data.category})
     limits = await limits_cursor.to_list(length=100)
@@ -62,6 +99,7 @@ async def create_manual_log(
                     "allowed_value": limits_map[param],
                     "status": "UNRESOLVED",
                     "alert_type": "COMPLIANCE",
+                    "type": "threshold_breach",
                     "log_id": log_id_str,
                     "timestamp": datetime.now(timezone.utc)
                 }
@@ -87,6 +125,7 @@ async def create_manual_log(
                 "allowed_value": 0, # No limit set
                 "status": "UNRESOLVED",
                 "alert_type": "LIMIT_MISSING",
+                "type": "limit_missing",
                 "unit": unit,
                 "log_id": log_id_str,
                 "timestamp": datetime.now(timezone.utc)
@@ -233,7 +272,6 @@ async def get_logs(
     logs = await cursor.to_list(length=100)
     return [map_id(log) for log in logs]
 
-
 # ==========================================
 # WebSocket Routes
 # ==========================================
@@ -248,8 +286,6 @@ async def websocket_IoT_endpoint(websocket: WebSocket, location_id: str):
     try:
         while True:
             # Await JSON payload from the IoT device
-            # Expected payload similar to:
-            # {"industry_id": "123", "category": "Air", "parameters": {"PM2.5": 55.0}}
             data = await websocket.receive_json()
             
             # Construct the log entry. We force the source to "IoT"

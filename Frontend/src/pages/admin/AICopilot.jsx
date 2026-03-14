@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Sparkles, BrainCircuit, Activity, ChevronRight, Zap, MapPin, Factory } from 'lucide-react';
 
 // Dummy 72-hour forecast data is removed; using dynamic state from Backend
@@ -12,6 +12,27 @@ const AICopilot = () => {
     const [scopeType, setScopeType] = useState('industry');
     const [scopeId, setScopeId] = useState('');
     const [availableEntities, setAvailableEntities] = useState([]);
+    const [chartView, setChartView] = useState("All Pollutants");
+
+    const availablePollutants = chartData && chartData.length > 0 
+        ? Object.keys(chartData[0]).filter(key => key !== 'time' && key !== 'name') 
+        : [];
+        
+    let chartOptions = ["All Pollutants"];
+    if (availablePollutants.length > 0) {
+        availablePollutants.forEach(p => chartOptions.push(`${p} Only`));
+        if (availablePollutants.length === 2 || availablePollutants.length === 3) {
+            chartOptions.push(availablePollutants.join(" vs "));
+        }
+    }
+    
+    const COLORS = ['#00E676', '#3b82f6', '#ef4444', '#f59e0b', '#a855f7', '#06b6d4'];
+    
+    let activeKeys = availablePollutants;
+    if (chartView !== "All Pollutants" && !chartView.includes("vs")) {
+        // Extract just the pollutant name
+        activeKeys = availablePollutants.filter(p => chartView.includes(p));
+    }
 
     useEffect(() => {
         const fetchEntities = async () => {
@@ -89,6 +110,7 @@ const AICopilot = () => {
                 insight: data.insight
             });
             setChartData(data.chartData || []);
+            setChartView("All Pollutants");
         } catch (error) {
             console.error('Simulation Error:', error);
             setResult({
@@ -127,19 +149,24 @@ const AICopilot = () => {
                         <h2 className="text-xl font-bold text-white flex items-center gap-2">
                             <Activity className="text-emerald-500 w-5 h-5" /> Regional Risk Forecast (Next 72h)
                         </h2>
-                        <p className="text-xs text-slate-400 mt-1">Predicted average composite index with uncertainty bounds.</p>
+                        <p className="text-xs text-slate-400 mt-1">Projected multisensor variables for simulation bounds.</p>
                     </div>
+                    {availablePollutants.length > 1 && (
+                        <select 
+                            value={chartView}
+                            onChange={(e) => setChartView(e.target.value)}
+                            className="bg-[#0b1114] border border-[#263238] rounded-xl text-white px-4 py-2 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-xs flex-shrink-0"
+                        >
+                            {chartOptions.map(opt => (
+                                <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                        </select>
+                    )}
                 </div>
 
                 <div className="h-[300px] w-full relative z-10">
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                            <defs>
-                                <linearGradient id="colorUpper" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#00E676" stopOpacity={0.1} />
-                                    <stop offset="95%" stopColor="#00E676" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
+                        <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#263238" vertical={false} />
                             <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 12 }} tickLine={false} axisLine={{ stroke: '#263238' }} />
                             <YAxis stroke="#64748b" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
@@ -151,11 +178,19 @@ const AICopilot = () => {
                                 labelStyle={{ color: '#94a3b8', marginBottom: '4px' }}
                             />
 
-                            {/* Uncertainty Bound */}
-                            <Area type="monotone" dataKey="upper" stroke="none" fill="url(#colorUpper)" />
-                            {/* Solid Predicted Line */}
-                            <Area type="monotone" dataKey="point" stroke="#00E676" strokeWidth={3} fill="none" />
-                        </AreaChart>
+                            {/* Dynamic Pollutant Lines */}
+                            {activeKeys.map((key, index) => (
+                                <Line 
+                                    key={key}
+                                    type="monotone" 
+                                    dataKey={key} 
+                                    stroke={COLORS[index % COLORS.length]} 
+                                    strokeWidth={3}
+                                    dot={{ r: 4, fill: COLORS[index % COLORS.length] }}
+                                    activeDot={{ r: 6 }}
+                                />
+                            ))}
+                        </LineChart>
                     </ResponsiveContainer>
                 </div>
             </div>

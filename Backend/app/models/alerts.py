@@ -11,13 +11,18 @@ class AlertBase(BaseModel):
     allowed_value: float
     status: str = "UNRESOLVED"
     monitoring_team_id: Optional[str] = None
-    alert_type: str = "COMPLIANCE" # COMPLIANCE or LIMIT_MISSING
+    alert_type: str = "COMPLIANCE" # COMPLIANCE, LIMIT_MISSING, or STATISTICAL_ANOMALY
     unit: Optional[str] = None
     log_id: Optional[str] = None
     industry_response: Optional[str] = None
     ro_feedback: Optional[str] = None
     responded_at: Optional[datetime] = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    
+    # --- AI Copilot / Anomaly Engine Fields ---
+    type: Optional[str] = None
+    severity: Optional[str] = None
+    message: Optional[str] = None
 
 class AlertCreate(AlertBase):
     pass
