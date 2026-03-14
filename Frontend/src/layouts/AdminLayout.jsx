@@ -9,14 +9,14 @@ import {
     Sparkles,
     Users,
     LogOut,
-    Globe
+    Globe,
+    ClipboardList
 } from 'lucide-react';
 
 import { AuthContext } from '../context/AuthContext';
-import bgImage from '../assets/bg/prithvinet-bg.png';
+import bgDark from '../assets/bg/prithvinet-bg.png';
 
 const AdminLayout = () => {
-
     const location = useLocation();
     const { user, logout } = useContext(AuthContext);
     const [alertCount, setAlertCount] = useState(0);
@@ -32,12 +32,8 @@ const AdminLayout = () => {
             }
         };
         fetchAlerts();
-        
-        // Listen for immediate updates from children
         const handleUpdate = () => fetchAlerts();
         window.addEventListener('policyUpdated', handleUpdate);
-
-        // Check every 30 seconds
         const interval = setInterval(fetchAlerts, 30000);
         return () => {
             clearInterval(interval);
@@ -52,6 +48,7 @@ const AdminLayout = () => {
         { path: '/admin-dashboard/policy', label: 'Policy & Limits', icon: Shield, badge: alertCount },
         { path: '/admin-dashboard/copilot', label: 'AI Copilot & Forecast', icon: Sparkles },
         { path: '/admin-dashboard/users', label: 'User Management', icon: Users },
+        { path: '/admin-dashboard/citizen-reports', label: 'Citizen Reports', icon: ClipboardList },
     ];
 
     const pageTitle =
@@ -59,16 +56,11 @@ const AdminLayout = () => {
         'Super Admin Dashboard';
 
     return (
-
-        <div className="relative h-screen text-slate-200 font-sans overflow-hidden">
+        <div className="relative h-screen font-sans overflow-hidden" style={{ backgroundColor: '#0b1114', color: '#94a3b8' }}>
 
             {/* Background Image */}
-            <div className="absolute inset-0 z-0">
-                <img
-                    src={bgImage}
-                    alt="background"
-                    className="w-full h-full object-cover"
-                />
+            <div className="absolute inset-0 z-0 pointer-events-none">
+                <img src={bgDark} alt="background" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-[#0b1114]/90"></div>
             </div>
 
@@ -80,137 +72,95 @@ const AdminLayout = () => {
             <div className="relative z-10 flex h-full">
 
                 {/* Sidebar */}
-                <aside className="w-64 bg-[#0f1a1f]/80 backdrop-blur-md border-r border-emerald-500/10 flex flex-col">
+                <aside className="w-64 flex flex-col" style={{ backgroundColor: 'rgba(26, 35, 39, 0.9)', borderRight: '1px solid #263238' }}>
+                    <div className="backdrop-blur-md w-full h-full flex flex-col">
 
-                    {/* Logo */}
-                    <div className="p-6 flex items-center gap-3 border-b border-slate-800">
-
-                        <div className="bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20 text-emerald-500">
-                            <Globe className="w-5 h-5" />
+                        {/* Logo */}
+                        <div className="p-6 flex items-center gap-3" style={{ borderBottom: '1px solid #263238' }}>
+                            <div className="bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/30 text-emerald-500">
+                                <Globe className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h2 className="font-bold text-lg text-white">PrithviNet</h2>
+                                <p className="text-xs text-emerald-400 font-medium">State HQ Portal</p>
+                            </div>
                         </div>
 
-                        <div>
-                            <h2 className="font-bold text-lg text-white">
-                                PrithviNet
-                            </h2>
+                        {/* Navigation */}
+                        <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
+                            {navItems.map((item) => {
+                                const Icon = item.icon;
+                                const isActive =
+                                    location.pathname === item.path ||
+                                    location.pathname.startsWith(item.path + '/');
 
-                            <p className="text-xs text-emerald-400 font-medium">
-                                State HQ Portal
-                            </p>
+                                return (
+                                    <Link
+                                        key={item.path}
+                                        to={item.path}
+                                        className={`flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-all ${
+                                            isActive
+                                                ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold'
+                                                : 'text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-300'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <Icon className="w-5 h-5" />
+                                            {item.label}
+                                        </div>
+                                        {item.badge > 0 && (
+                                            <span className="bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]">
+                                                {item.badge}
+                                            </span>
+                                        )}
+                                    </Link>
+                                );
+                            })}
+                        </nav>
+
+                        {/* Logout */}
+                        <div className="p-4" style={{ borderTop: '1px solid #263238' }}>
+                            <button
+                                onClick={logout}
+                                className="flex w-full items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-all"
+                            >
+                                <LogOut className="w-5 h-5" />
+                                Sign Out
+                            </button>
                         </div>
-
                     </div>
-
-
-                    {/* Navigation */}
-                    <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
-
-                        {navItems.map((item) => {
-
-                            const Icon = item.icon;
-
-                            const isActive =
-                                location.pathname === item.path ||
-                                location.pathname.startsWith(item.path + '/');
-
-                            return (
-
-                                <Link
-                                    key={item.path}
-                                    to={item.path}
-                                    className={`flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-all
-                                    
-                                    ${
-                                        isActive
-                                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                                            : 'text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-300'
-                                    }
-                                    
-                                    `}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <Icon className="w-5 h-5" />
-                                        {item.label}
-                                    </div>
-
-                                    {item.badge > 0 && (
-                                        <span className="bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]">
-                                            {item.badge}
-                                        </span>
-                                    )}
-                                </Link>
-
-                            );
-
-                        })}
-
-                    </nav>
-
-
-                    {/* Logout */}
-                    <div className="p-4 border-t border-slate-800">
-
-                        <button
-                            onClick={logout}
-                            className="flex w-full items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all"
-                        >
-
-                            <LogOut className="w-5 h-5" />
-
-                            Sign Out
-
-                        </button>
-
-                    </div>
-
                 </aside>
-
-
 
                 {/* Main Content */}
                 <div className="flex-1 flex flex-col min-w-0">
 
-
                     {/* Topbar */}
-                    <header className="h-16 bg-gradient-to-r from-[#0f1a1f] to-[#0b1114] border-b border-emerald-500/10 flex items-center justify-between px-8 shrink-0">
+                    <header className="h-16 flex items-center justify-between px-8 shrink-0 backdrop-blur-md"
+                            style={{ backgroundColor: 'rgba(26, 35, 39, 0.9)', borderBottom: '1px solid #263238' }}>
 
-                        <h1 className="text-lg font-semibold text-white">
-                            {pageTitle}
-                        </h1>
-
+                        <h1 className="text-lg font-semibold text-white">{pageTitle}</h1>
 
                         <div className="flex items-center gap-4">
-
                             <div className="text-sm text-slate-400">
                                 Logged in as
-                                <span className="text-emerald-400 font-medium ml-1">
+                                <span className="text-emerald-400 font-bold ml-1">
                                     {user?.role?.toUpperCase()}
                                 </span>
                             </div>
-
-                            <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-slate-950 font-bold text-sm shadow-[0_0_15px_rgba(16,185,129,0.6)]">
+                            <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-slate-950 font-bold text-sm shadow-[0_0_15px_rgba(16,185,129,0.4)]">
                                 {user?.role?.slice(0,2)?.toUpperCase() || "SA"}
                             </div>
-
                         </div>
-
                     </header>
-
-
 
                     {/* Page Content */}
                     <main className="flex-1 overflow-auto p-8 relative">
                         <Outlet />
                     </main>
-
                 </div>
-
             </div>
-
         </div>
-
     );
-
 };
 
 export default AdminLayout;

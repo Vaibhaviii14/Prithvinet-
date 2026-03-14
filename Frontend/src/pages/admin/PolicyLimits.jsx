@@ -211,26 +211,26 @@ const PolicyLimits = () => {
                 </div>
             )}
 
-            <div className="mb-8 border-b border-[#263238] pb-6">
-                <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
-                    <ShieldAlert className="text-emerald-500 w-8 h-8" />
+            <div className="mb-8 border-b border-white/5 pb-6">
+                <h1 className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white flex items-center gap-3">
+                    <ShieldAlert className="text-emerald-400 w-8 h-8 shadow-[0_0_15px_rgba(52,211,153,0.4)]" />
                     Policy & Prescribed Limits
                 </h1>
-                <p className="text-sm text-slate-400 mt-2">Globally define the automated compliance bounds for the entire state network.</p>
+                <p className="text-sm text-[var(--text-secondary)] dark:text-slate-400 mt-2">Globally define the automated compliance bounds for the entire state network.</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
                 {/* Left Column - Policy Form */}
                 <div className="space-y-6">
-                    <div className="bg-[#1a2327] border border-[#263238] rounded-2xl p-6 shadow-sm overflow-hidden relative">
+                    <div className="glass-card p-6 shadow-2xl overflow-hidden relative">
                         {loading && (
-                            <div className="absolute inset-0 bg-[#1a2327]/80 backdrop-blur-sm z-10 flex items-center justify-center">
-                                <Activity className="w-8 h-8 text-emerald-500 animate-spin" />
+                            <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-md z-10 flex items-center justify-center">
+                                <Activity className="w-8 h-8 text-emerald-400 animate-spin" />
                             </div>
                         )}
 
-                        <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-[var(--text-primary)] dark:text-white mb-6 flex items-center gap-2">
                             <Sliders className="w-5 h-5 text-emerald-500" /> Policy Configuration Ruleset
                         </h2>
 
@@ -243,21 +243,21 @@ const PolicyLimits = () => {
                                     <button
                                         type="button"
                                         onClick={() => handleCategorySelect('Air')}
-                                        className={`py-3 flex flex-col items-center justify-center gap-2 rounded-xl border transition-all ${category === 'Air' ? 'bg-blue-500/10 border-blue-500 text-blue-400 font-bold' : 'bg-[#0b1114] border-[#263238] text-slate-400 hover:border-slate-500'}`}
+                                        className={`py-3 flex flex-col items-center justify-center gap-2 rounded-xl border transition-all ${category === 'Air' ? 'bg-blue-500/20 border-blue-500/50 text-blue-600 font-bold shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'theme-input hover:border-emerald-500/40'}`}
                                     >
                                         <Wind className="w-6 h-6" /> Air
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => handleCategorySelect('Water')}
-                                        className={`py-3 flex flex-col items-center justify-center gap-2 rounded-xl border transition-all ${category === 'Water' ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400 font-bold' : 'bg-[#0b1114] border-[#263238] text-slate-400 hover:border-slate-500'}`}
+                                        className={`py-3 flex flex-col items-center justify-center gap-2 rounded-xl border transition-all ${category === 'Water' ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400 font-bold shadow-[0_0_15px_rgba(6,182,212,0.2)]' : 'bg-slate-950/50 border-white/10 text-slate-400 hover:border-white/20'}`}
                                     >
                                         <Droplet className="w-6 h-6" /> Water
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => handleCategorySelect('Noise')}
-                                        className={`py-3 flex flex-col items-center justify-center gap-2 rounded-xl border transition-all ${category === 'Noise' ? 'bg-purple-500/10 border-purple-500 text-purple-400 font-bold' : 'bg-[#0b1114] border-[#263238] text-slate-400 hover:border-slate-500'}`}
+                                        className={`py-3 flex flex-col items-center justify-center gap-2 rounded-xl border transition-all ${category === 'Noise' ? 'bg-purple-500/20 border-purple-500/50 text-purple-400 font-bold shadow-[0_0_15px_rgba(168,85,247,0.2)]' : 'bg-slate-950/50 border-white/10 text-slate-400 hover:border-white/20'}`}
                                     >
                                         <VolumeX className="w-6 h-6" /> Noise
                                     </button>
@@ -270,13 +270,13 @@ const PolicyLimits = () => {
                                 <select
                                     value={parameterDrop}
                                     onChange={handleParamSelect}
-                                    className="w-full bg-[#0b1114] border border-[#263238] rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 appearance-none"
+                                    className="theme-input w-full rounded-xl px-4 py-3 text-sm appearance-none"
                                 >
                                     <option value="" disabled>Select a predefined pollutant...</option>
                                     {getDropdownOptions().map(opt => (
-                                        <option key={opt} value={opt}>{opt}</option>
+                                        <option key={opt} value={opt} className="bg-slate-900">{opt}</option>
                                     ))}
-                                    <option value="Other">Other (Custom)</option>
+                                    <option value="Other" className="bg-slate-900">Other (Custom)</option>
                                 </select>
 
                                 {parameterDrop === 'Other' && (
@@ -285,46 +285,46 @@ const PolicyLimits = () => {
                                         placeholder="Type custom parameter name (e.g. Iron)"
                                         value={customParameter}
                                         onChange={handleCustomParamChange}
-                                        className="w-full bg-[#0b1114] border border-emerald-500/50 rounded-xl px-4 py-3 mt-2 text-sm text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 placeholder-slate-600 shadow-[0_0_10px_rgba(0,230,118,0.1)]"
+                                        className="theme-input w-full rounded-xl px-4 py-3 mt-2 text-sm neon-border"
                                     />
                                 )}
                             </div>
 
                             {/* Step 3: Thresholds */}
-                            <div className={`space-y-4 transition-opacity duration-300 bg-[#0b1114] p-5 rounded-xl border border-[#263238] ${step >= 3 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
+                            <div className={`space-y-4 transition-opacity duration-300 bg-white/5 p-5 rounded-xl border border-white/5 ${step >= 3 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
                                 <div className="flex items-center gap-2 mb-2">
-                                    <ListPlus className="w-4 h-4 text-emerald-500" />
-                                    <label className="text-xs font-bold text-emerald-500 uppercase tracking-widest">3. Set Strict Bounds</label>
+                                    <ListPlus className="w-4 h-4 text-emerald-400" />
+                                    <label className="text-xs font-bold text-emerald-400 uppercase tracking-widest">3. Set Strict Bounds</label>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1.5">Max Permissible Limit</label>
+                                        <label className="block text-xs font-medium text-gray-500 mb-1.5">Max Permissible Limit</label>
                                         <input
                                             type="number"
                                             step="any"
                                             value={maxValue}
                                             onChange={(e) => setMaxValue(e.target.value)}
                                             placeholder="e.g. 60"
-                                            className="w-full bg-[#1a2327] border border-[#263238] rounded-lg px-3 py-2 text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-mono text-lg"
+                                            className="theme-input w-full rounded-lg px-3 py-2.5 font-mono text-lg"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1.5">Measurement Unit</label>
+                                        <label className="block text-xs font-medium text-gray-500 mb-1.5">Measurement Unit</label>
                                         <input
                                             type="text"
                                             value={unit}
                                             onChange={(e) => setUnit(e.target.value)}
                                             placeholder="e.g. µg/m³"
-                                            className="w-full bg-[#1a2327] border border-[#263238] rounded-lg px-3 py-2 text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-mono text-lg"
+                                            className="theme-input w-full rounded-lg px-3 py-2.5 font-mono text-lg"
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            <button
+                             <button
                                 type="submit"
                                 disabled={submitting || step < 3 || !maxValue || !unit}
-                                className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-emerald-500 hover:bg-emerald-400 text-[#0b1114] font-black rounded-xl transition-all shadow-[0_0_15px_rgba(0,230,118,0.3)] hover:shadow-[0_0_25px_rgba(0,230,118,0.5)] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed uppercase tracking-wider text-sm"
+                                className="w-full flex items-center justify-center gap-2 py-4 px-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed uppercase tracking-wider text-sm"
                             >
                                 {submitting ? <Activity className="w-5 h-5 animate-spin" /> : 'Save / Update Policy Rule'}
                             </button>
@@ -333,10 +333,10 @@ const PolicyLimits = () => {
                 </div>
 
                 {/* Right Column - Table of rules */}
-                <div className="bg-[#1a2327] border border-[#263238] rounded-2xl shadow-sm overflow-hidden flex flex-col h-[650px]">
-                    <div className="p-5 border-b border-[#263238] bg-slate-900/30">
-                        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                            <ListPlus className="text-emerald-500 w-5 h-5" /> Active Prescribed Limits
+                <div className="glass-card shadow-2xl overflow-hidden flex flex-col h-[650px]">
+                    <div className="p-5 border-b border-white/5 bg-white/5">
+                        <h2 className="text-lg font-bold text-[var(--text-primary)] dark:text-white flex items-center gap-2">
+                            <ListPlus className="text-emerald-400 w-5 h-5" /> Active Prescribed Limits
                         </h2>
                     </div>
 
@@ -352,7 +352,7 @@ const PolicyLimits = () => {
                                                     <ShieldAlert className="w-5 h-5 text-red-500" />
                                                 </div>
                                                 <div>
-                                                    <h4 className="text-sm font-bold text-white">Missing Policy: {p.parameter}</h4>
+                                                    <h4 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Missing Policy: {p.parameter}</h4>
                                                     <p className="text-[10px] text-red-400 uppercase font-black">{cat} Segment • {p.unit || 'No Unit'}</p>
                                                 </div>
                                             </div>
@@ -394,10 +394,10 @@ const PolicyLimits = () => {
                                             >
                                                 {cat} Quality Limits
                                             </h3>
-                                            <div className="grid grid-cols-1 gap-2">
+                                             <div className="grid grid-cols-1 gap-2">
                                                 {groupedLimits[cat].map(limit => (
-                                                    <div key={limit.id} className="bg-[#0b1114] border border-[#263238] rounded-lg p-3 flex justify-between items-center hover:bg-white/5 transition-colors">
-                                                        <span className="font-bold text-slate-300 text-sm">{limit.parameter}</span>
+                                                    <div key={limit.id} className="theme-input rounded-lg p-3 flex justify-between items-center hover:border-emerald-500/40 transition-colors">
+                                                        <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{limit.parameter}</span>
                                                         <div className="font-mono text-sm">
                                                             <span className="text-red-400 font-bold">{limit.max_allowed_value}</span>
                                                             <span className="text-slate-500 ml-1">{limit.unit}</span>

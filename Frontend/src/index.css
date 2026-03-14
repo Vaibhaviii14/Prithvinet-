@@ -1,11 +1,100 @@
 @import "tailwindcss";
 
+/* ============================================
+   DARK THEME ONLY — No light mode
+   ============================================ */
+:root {
+  --bg-primary: #0b1114;
+  --bg-secondary: #1a2327;
+  --bg-tertiary: #0b1114;
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --border-accent: rgba(16, 185, 129, 0.2);
+  --glass-bg: rgba(15, 23, 42, 0.4);
+  --sidebar-bg: rgba(26, 35, 39, 0.9);
+  --sidebar-border: #263238;
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(16, 185, 129, 0.08);
+  --neon-glow: 0 0 15px rgba(16, 185, 129, 0.1);
+}
+
+/* ============================================
+   BASE
+   ============================================ */
 @layer base {
   body {
-    background-color: #0b1114;
-    color: #cbd5e1;
-    /* text-slate-300 */
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  select, input, textarea {
+    color-scheme: dark;
+  }
+}
+
+/* ============================================
+   COMPONENTS
+   ============================================ */
+@layer components {
+  .glass-card {
+    background-color: var(--glass-bg);
+    border: 1.5px solid rgba(16, 185, 129, 0.45);
+    box-shadow: var(--card-shadow), 0 0 14px rgba(16, 185, 129, 0.18);
+    @apply backdrop-blur-xl rounded-2xl;
+    transition: box-shadow 0.3s, transform 0.3s;
+  }
+
+  .glass-card:hover {
+    box-shadow: var(--card-shadow), 0 0 24px rgba(16, 185, 129, 0.35), 0 8px 32px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+  }
+
+  .glass-card-hover {
+    @apply hover:-translate-y-1 transition-all duration-300;
+  }
+
+  .neon-border {
+    border: 1.5px solid rgba(16, 185, 129, 0.45);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+    transition: box-shadow 0.3s, transform 0.3s;
+  }
+  .neon-border:hover {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  }
+
+  .theme-input {
+    background-color: #0f1923;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    color: #ffffff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .theme-input:focus {
+    outline: none;
+    border-color: rgba(16, 185, 129, 0.6);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+  }
+  .theme-input::placeholder {
+    color: #64748b;
+  }
+
+  .theme-modal {
+    background-color: #1a2327;
+    border: 1px solid #263238;
+    color: #ffffff;
+  }
+
+  .theme-modal-header {
+    background-color: #0b1114;
+    border-bottom: 1px solid #263238;
+  }
+
+  .neon-border-strong {
+    border: 1.5px solid rgba(16, 185, 129, 0.6);
+    box-shadow: 0 0 18px rgba(16, 185, 129, 0.28);
+    transition: box-shadow 0.3s, transform 0.3s;
+  }
+  .neon-border-strong:hover {
+    box-shadow: 0 0 28px rgba(16, 185, 129, 0.5);
   }
 }

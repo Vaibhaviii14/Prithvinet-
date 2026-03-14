@@ -7,11 +7,11 @@ const ROLocations = () => {
         <div className="space-y-6 max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
+                    <h1 className="text-3xl font-extrabold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
                         <MapPin className="text-emerald-500 w-8 h-8" />
                         Locations & Sensors
                     </h1>
-                    <p className="text-sm text-slate-400 mt-2">Manage monitoring sites and deploy new sensor stations.</p>
+                    <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>Manage monitoring sites and deploy new sensor stations.</p>
                 </div>
             </div>
 

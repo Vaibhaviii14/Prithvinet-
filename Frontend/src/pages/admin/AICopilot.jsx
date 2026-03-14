@@ -126,36 +126,36 @@ const AICopilot = () => {
 
     return (
         <div className="space-y-6 max-w-6xl mx-auto">
-            <div className="mb-8 border-b border-[#263238] pb-6 flex items-center justify-between">
+            <div className="mb-8 border-b border-white/5 pb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
-                        <BrainCircuit className="text-emerald-500 w-8 h-8" />
+                    <h1 className="text-3xl font-extrabold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
+                        <BrainCircuit className="text-emerald-400 w-8 h-8 shadow-[0_0_15px_rgba(52,211,153,0.4)]" />
                         AI Copilot & Forecast
                     </h1>
-                    <p className="text-sm text-slate-400 mt-2">Machine Learning surrogate models for environmental oversight.</p>
+                    <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>Machine Learning surrogate models for environmental oversight.</p>
                 </div>
-                <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-[0_0_15px_rgba(0,230,118,0.2)]">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Engine Active
+                <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.2)] neon-border">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10B981] animate-pulse"></span> Engine Active
                 </div>
             </div>
 
             {/* Top Chart Section */}
-            <div className="bg-[#1a2327] border border-[#263238] rounded-2xl shadow-lg p-6 relative overflow-hidden">
+            <div className="glass-card shadow-2xl p-6 relative overflow-hidden">
                 {/* Decorative background glow */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/4"></div>
 
                 <div className="flex items-center justify-between mb-6 relative z-10">
                     <div>
-                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                        <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                             <Activity className="text-emerald-500 w-5 h-5" /> Regional Risk Forecast (Next 72h)
                         </h2>
-                        <p className="text-xs text-slate-400 mt-1">Projected multisensor variables for simulation bounds.</p>
+                        <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Projected multisensor variables for simulation bounds.</p>
                     </div>
                     {availablePollutants.length > 1 && (
                         <select 
                             value={chartView}
                             onChange={(e) => setChartView(e.target.value)}
-                            className="bg-[#0b1114] border border-[#263238] rounded-xl text-white px-4 py-2 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-xs flex-shrink-0"
+                            className="theme-input rounded-xl px-4 py-2 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-xs flex-shrink-0"
                         >
                             {chartOptions.map(opt => (
                                 <option key={opt} value={opt}>{opt}</option>
@@ -173,8 +173,8 @@ const AICopilot = () => {
 
                             {/* Custom Tooltip */}
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#1a2327', borderColor: '#263238', borderRadius: '8px', color: '#fff' }}
-                                itemStyle={{ color: '#00E676' }}
+                                contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: 'rgba(16, 185, 129, 0.3)', borderRadius: '12px', backdropFilter: 'blur(8px)', color: '#fff' }}
+                                itemStyle={{ color: '#10B981' }}
                                 labelStyle={{ color: '#94a3b8', marginBottom: '4px' }}
                             />
 
@@ -196,29 +196,29 @@ const AICopilot = () => {
             </div>
 
             {/* What-If Scenario Builder */}
-            <div className="bg-[#1a2327] border border-[#263238] rounded-2xl shadow-lg overflow-hidden">
-                <div className="bg-slate-900/50 p-6 border-b border-[#263238]">
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        <Sparkles className="text-emerald-500 w-5 h-5" /> "What-If" Scenario Builder
+            <div className="glass-card shadow-2xl overflow-hidden">
+                <div className="bg-white/5 p-6 border-b border-white/5">
+                    <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                        <Sparkles className="text-emerald-400 w-5 h-5" /> "What-If" Scenario Builder
                     </h2>
-                    <p className="text-xs text-slate-400 mt-1">Query the surrogate model to test policy interventions.</p>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Query the surrogate model to test policy interventions.</p>
                 </div>
 
                 <div className="p-6">
                         <form onSubmit={handleSimulation} className="flex flex-col gap-4">
                             <div className="flex items-center gap-4 mb-2">
-                                <div className="p-3 bg-slate-900 border border-[#263238] rounded-xl flex items-center justify-center">
+                                <div className="p-3 bg-slate-950/50 border border-emerald-500/20 rounded-xl flex items-center justify-center neon-border">
                                     {scopeType === 'industry' ? (
-                                        <Factory className="text-emerald-500 w-5 h-5" />
+                                        <Factory className="text-emerald-400 w-5 h-5" />
                                     ) : (
-                                        <MapPin className="text-emerald-500 w-5 h-5" />
+                                        <MapPin className="text-emerald-400 w-5 h-5" />
                                     )}
                                 </div>
                                 
                                 <select 
                                     value={scopeType}
                                     onChange={(e) => setScopeType(e.target.value)}
-                                    className="bg-[#0b1114] border border-[#263238] rounded-xl text-white px-4 py-3 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-sm flex-shrink-0"
+                                    className="theme-input rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 font-medium text-sm flex-shrink-0 appearance-none"
                                 >
                                     <option value="industry">Target Industry</option>
                                     <option value="region">Target Region</option>
@@ -227,7 +227,7 @@ const AICopilot = () => {
                                 <select 
                                     value={scopeId}
                                     onChange={(e) => setScopeId(e.target.value)}
-                                    className="bg-[#0b1114] border border-[#263238] rounded-xl text-white px-4 py-3 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium text-sm flex-1"
+                                    className="theme-input rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 font-medium text-sm flex-1 appearance-none"
                                 >
                                     {availableEntities.map(entity => (
                                         <option key={entity.id} value={entity.id}>{entity.name}</option>
@@ -245,7 +245,7 @@ const AICopilot = () => {
                                         value={prompt}
                                         onChange={(e) => setPrompt(e.target.value)}
                                         placeholder="e.g., If industry X reduces emissions by 30%, what is the expected change in regional risk?"
-                                        className="block w-full pl-11 pr-4 py-4 bg-[#0b1114] border border-[#263238] rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-mono text-sm shadow-inner"
+                                        className="theme-input block w-full pl-11 pr-4 py-4 rounded-xl font-mono text-sm shadow-inner"
                                     />
                                 </div>
                                 <button
@@ -260,7 +260,7 @@ const AICopilot = () => {
                         </form>
 
                     {/* Result Card */}
-                    <div className={`mt-6 rounded-xl border p-6 transition-all duration-500 ${result ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-[#0b1114] border-[#263238] border-dashed'}`}>
+                    <div className={`mt-6 rounded-xl border p-6 transition-all duration-500 backdrop-blur-md ${result ? 'bg-emerald-500/10 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'bg-slate-950/50 border-white/10 border-dashed'}`}>
                         {!result ? (
                             <div className="text-center text-slate-500 py-8 flex flex-col items-center gap-3">
                                 <Sparkles className="w-8 h-8 text-slate-600 opacity-50" />
@@ -272,16 +272,16 @@ const AICopilot = () => {
                                     <div className="bg-emerald-500 text-slate-950 p-1.5 rounded-md">
                                         <Activity className="w-5 h-5" />
                                     </div>
-                                    <h3 className="text-lg font-bold text-white">Simulation Complete</h3>
+                                    <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Simulation Complete</h3>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="bg-[#0b1114] border border-emerald-500/20 rounded-lg p-4">
-                                        <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider font-semibold">Projected Impact</p>
+                                    <div className="glass-card p-4">
+                                        <p className="text-xs mb-1 uppercase tracking-wider font-semibold" style={{ color: 'var(--text-secondary)' }}>Projected Impact</p>
                                         <p className="text-3xl font-black text-emerald-400">{result.impact}</p>
                                     </div>
-                                    <div className="md:col-span-2 bg-[#0b1114] border border-[#263238] rounded-lg p-4">
-                                        <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider font-semibold">Engine Insight</p>
-                                        <p className="text-sm text-slate-200 leading-relaxed font-medium">{result.insight}</p>
+                                    <div className="md:col-span-2 glass-card p-4">
+                                        <p className="text-xs mb-1 uppercase tracking-wider font-semibold" style={{ color: 'var(--text-secondary)' }}>Engine Insight</p>
+                                        <p className="text-sm leading-relaxed font-medium" style={{ color: 'var(--text-primary)' }}>{result.insight}</p>
                                     </div>
                                 </div>
                             </div>

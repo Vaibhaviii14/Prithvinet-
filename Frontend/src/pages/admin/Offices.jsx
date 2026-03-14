@@ -108,11 +108,11 @@ const Offices = () => {
             )}
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
+                    <h1 className="text-3xl font-extrabold text-[var(--text-primary)] dark:text-white flex items-center gap-3">
                         <Building2 className="text-emerald-500 w-8 h-8" />
                         Regional Offices
                     </h1>
-                    <p className="text-sm text-slate-400 mt-2">Manage CECB regional headquarters and monitoring centers.</p>
+                    <p className="text-sm text-[var(--text-secondary)] dark:text-slate-400 mt-2">Manage CECB regional headquarters and monitoring centers.</p>
                 </div>
                 <button
                     onClick={() => setIsModalOpen(true)}
@@ -124,40 +124,40 @@ const Offices = () => {
 
             {/* KPI Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-[#1a2327] border border-[#263238] rounded-2xl p-6 shadow-sm flex items-center justify-between">
+                <div className="glass-card glass-card-hover p-6 flex items-center justify-between">
                     <div>
-                        <p className="text-sm font-medium text-slate-400">Total ROs</p>
-                        <p className="text-3xl font-black text-white mt-1">{offices.length}</p>
+                        <p className="text-sm font-medium text-[var(--text-secondary)] dark:text-slate-400">Total ROs</p>
+                        <p className="text-3xl font-black text-[var(--text-primary)] dark:text-white mt-1">{offices.length}</p>
                     </div>
-                    <div className="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 text-emerald-500">
+                    <div className="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 text-emerald-500 neon-border">
                         <Building2 className="w-6 h-6" />
                     </div>
                 </div>
             </div>
 
             {/* List */}
-            <div className="bg-[#1a2327] border border-[#263238] rounded-2xl overflow-hidden">
-                <div className="p-4 border-b border-[#263238] bg-slate-900/30">
+            <div className="glass-card overflow-hidden">
+                <div className="p-4 border-b border-white/5 bg-white/5">
                     <div className="relative max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                        <input type="text" placeholder="Search offices..." className="w-full bg-[#0b1114] border border-[#263238] text-sm text-slate-200 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-medium" />
+                        <input type="text" placeholder="Search offices..." className="theme-input w-full text-sm rounded-lg pl-10 pr-4 py-2 font-medium" />
                     </div>
                 </div>
 
                 {loading ? (
                     <div className="p-8 text-center text-emerald-500 animate-pulse">Loading regional offices...</div>
                 ) : (
-                    <div className="divide-y divide-[#263238]">
+                    <div className="divide-y divide-white/5">
                         {offices.map((office) => (
-                            <div key={office.id} className="p-6 hover:bg-slate-800/30 transition-colors flex items-center justify-between group">
+                            <div key={office.id} className="p-6 hover:bg-emerald-500/5 transition-colors flex items-center justify-between group">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-full bg-slate-800 border border-[#263238] flex items-center justify-center text-slate-400 group-hover:text-emerald-500 group-hover:border-emerald-500/50 transition-colors">
+                                    <div className="w-12 h-12 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 group-hover:text-emerald-500 group-hover:border-emerald-500/50 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all">
                                         <Building2 className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-white text-lg">{office.name}</h3>
+                                        <h3 className="font-bold text-[var(--text-primary)] dark:text-white text-lg">{office.name}</h3>
                                         {office.jurisdiction_districts && (
-                                            <p className="text-sm text-slate-400 flex items-center gap-1 mt-0.5">
+                                            <p className="text-sm text-[var(--text-secondary)] dark:text-slate-400 flex items-center gap-1 mt-0.5">
                                                 <MapPin className="w-3 h-3" /> {office.jurisdiction_districts.join(', ')}
                                             </p>
                                         )}
@@ -193,7 +193,7 @@ const Offices = () => {
                     <div className="w-full max-w-md relative animate-in fade-in zoom-in-95 duration-200">
                         <button 
                             onClick={handleCloseModal}
-                            className="absolute top-4 right-4 text-slate-400 hover:text-white z-10 p-1 bg-[#1a2327] rounded-full border border-[#263238]"
+                            className="absolute top-4 right-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)] z-10 p-1 theme-modal rounded-full"
                         >
                             <X className="w-5 h-5" />
                         </button>
@@ -204,43 +204,43 @@ const Offices = () => {
 
             {isEditModalOpen && selectedRO && (
                 <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                    <div className="w-full max-w-md relative animate-in fade-in zoom-in-95 duration-200 bg-[#11181c] border border-[#263238] rounded-2xl shadow-2xl overflow-hidden">
-                        <div className="p-4 border-b border-[#263238] bg-[#151c21] flex justify-between items-center">
-                            <h3 className="text-white font-bold flex items-center gap-2">
+                    <div className="w-full max-w-md relative animate-in fade-in zoom-in-95 duration-200 theme-modal rounded-2xl shadow-2xl overflow-hidden">
+                        <div className="p-4 theme-modal-header flex justify-between items-center">
+                            <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                                 <Building2 className="w-5 h-5 text-emerald-500" /> Edit Regional Office
                             </h3>
-                            <button onClick={handleCloseModal} className="text-slate-400 hover:text-white transition-colors">
+                            <button onClick={handleCloseModal} className="transition-colors hover:text-emerald-500" style={{ color: 'var(--text-secondary)' }}>
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
                         <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-xs font-semibold text-slate-400 mb-1.5">RO Name</label>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1.5">RO Name</label>
                                 <input 
                                     type="text" 
                                     required
                                     value={editFormData.name}
                                     onChange={e => setEditFormData({...editFormData, name: e.target.value})}
-                                    className="w-full bg-[#151c21] border border-[#263238] rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 transition-colors text-sm"
+                                    className="theme-input w-full rounded-xl px-4 py-2.5 text-sm"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-slate-400 mb-1.5">Region ID / Key</label>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Region ID / Key</label>
                                 <input 
                                     type="text" 
                                     required
                                     value={editFormData.region_id}
                                     onChange={e => setEditFormData({...editFormData, region_id: e.target.value})}
-                                    className="w-full bg-[#151c21] border border-[#263238] rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 transition-colors text-sm font-mono"
+                                    className="theme-input w-full rounded-xl px-4 py-2.5 text-sm font-mono"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-slate-400 mb-1.5">Districts (Comma Separated)</label>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1.5">Districts (Comma Separated)</label>
                                 <input 
                                     type="text" 
                                     value={editFormData.jurisdiction_districts}
                                     onChange={e => setEditFormData({...editFormData, jurisdiction_districts: e.target.value})}
-                                    className="w-full bg-[#151c21] border border-[#263238] rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 transition-colors text-sm"
+                                    className="theme-input w-full rounded-xl px-4 py-2.5 text-sm"
                                     placeholder="Raipur, Bilaspur, Bhilai"
                                 />
                             </div>
