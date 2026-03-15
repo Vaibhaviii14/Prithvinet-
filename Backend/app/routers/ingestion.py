@@ -176,16 +176,20 @@ async def process_compliance_and_alerts(log_id_str: str, log_data_dict: dict, ba
 async def create_manual_log(
     log_data: PollutionLogCreate,
     background_tasks: BackgroundTasks,
-    current_user: UserResponse = Depends(RoleChecker(["industry", "monitoring_team"]))
+    current_user: UserResponse = Depends(RoleChecker(["industry", "monitoring_team", "super_admin", "ro"]))
 ):
     """
     Manually submit a pollution log entry.
-    Requires 'industry' or 'monitoring_team' role.
+    Requires 'industry', 'monitoring_team', 'ro', or 'super_admin' role.
     """
-    # Force the source to be manual
     data_dict = log_data.model_dump()
     data_dict["source"] = "Manual"
-    
+
+    # Auto-populate industry_id from the authenticated user's entity_id if not provided
+    user_role = getattr(current_user.role, "value", current_user.role)
+    if not data_dict.get("industry_id") and user_role == "industry":
+        data_dict["industry_id"] = current_user.entity_id
+
     if "timestamp" not in data_dict or data_dict["timestamp"] is None:
         data_dict["timestamp"] = datetime.now(timezone.utc)
 

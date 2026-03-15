@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Plus, X, UploadCloud, Activity, CheckCircle } from 'lucide-react';
 import api from '../../api/axios';
+import { AuthContext } from '../../context/AuthContext';
 
 const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
+    const { user } = useContext(AuthContext);
     const PARAMETER_OPTIONS = {
         Air: ["PM10", "PM2.5", "SO2", "NO2", "CO", "O3", "NH3", "Pb", "Benzene", "BaP"],
         Water: ["pH", "BOD", "COD", "TSS", "TDS", "Oil & Grease", "Lead", "Arsenic", "Mercury"],
@@ -30,8 +32,6 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
     useEffect(() => {
         if (isOpen) {
             setFormData(prev => ({ ...prev, timestamp: getLocalDatetimeString() }));
-            const userStr = localStorage.getItem('user');
-            const user = userStr ? JSON.parse(userStr) : null;
             const filterRegion = user?.role !== 'super_admin' ? user?.region_id : null;
             fetchLocations(null, filterRegion);
         }
@@ -93,8 +93,6 @@ const SubmitLogModal = ({ isOpen, onClose, onSuccess }) => {
 
         try {
             setSubmitting(true);
-            const userStr = localStorage.getItem('user');
-            const user = userStr ? JSON.parse(userStr) : null;
             const industry_id = user?.entity_id || '';
 
             const payload = {

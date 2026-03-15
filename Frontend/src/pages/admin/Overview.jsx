@@ -7,62 +7,50 @@ import { Link } from 'react-router-dom';
 const Overview = () => {
     const [heatmapData, setHeatmapData] = useState([]);
     const [loading, setLoading] = useState(true);
-    
-    // Alerts state
     const [alerts, setAlerts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-
     const [totalROs, setTotalROs] = useState(0);
     const [totalIndustries, setTotalIndustries] = useState(0);
 
+    const fetchDashboardData = async () => {
+        try {
+            const [roRes, indRes, hmRes] = await Promise.all([
+                api.get('/api/master/regional-offices'),
+                api.get('/api/master/industries'),
+                api.get('/api/reports/map-data'),
+            ]);
+            setTotalROs(roRes.data?.length || 0);
+            setTotalIndustries(indRes.data?.length || 0);
+            setHeatmapData(hmRes.data || []);
+        } catch (err) {
+            console.error("Failed to fetch overview metrics", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchAlertsData = async () => {
+        try {
+            setIsLoading(true);
+            const res = await api.get('/api/alerts');
+            const activeAlerts = res.data.filter(a => a.status === 'UNRESOLVED' || a.status === 'ACTION_TAKEN');
+            setAlerts(activeAlerts);
+        } catch (err) {
+            console.error("Failed to fetch alerts", err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Fetch KPIs
-                const roRes = await api.get('/api/master/regional-offices');
-                setTotalROs(roRes.data?.length || 0);
-
-                const indRes = await api.get('/api/master/industries');
-                setTotalIndustries(indRes.data?.length || 0);
-
-                // Fetch Heatmap data
-                const hmRes = await api.get('/api/reports/map-data');
-                setHeatmapData(hmRes.data);
-
-                setLoading(false);
-            } catch (err) {
-                console.error("Failed to fetch overview metrics", err);
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, []);
-
-    useEffect(() => {
-        const fetchAlerts = async () => {
-            try {
-                setIsLoading(true);
-                const res = await api.get('/api/alerts');
-                const activeAlerts = res.data.filter(a => a.status === 'UNRESOLVED' || a.status === 'ACTION_TAKEN');
-                setAlerts(activeAlerts);
-            } catch (err) {
-                console.error("Failed to fetch alerts", err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        // Initial fetch on mount
         fetchDashboardData();
         fetchAlertsData();
 
-        // Establish WebSocket for live reloads
         const ws = new WebSocket(import.meta.env.VITE_WS_URL || 'ws://localhost:8000/api/ws/alerts');
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
                 if (data.event === 'REFRESH_ALERTS') {
-                    // Refetch both datasets silently
                     fetchDashboardData();
                     fetchAlertsData();
                 }
@@ -133,12 +121,12 @@ const Overview = () => {
                         <div className="glass-card glass-card-hover p-5 neon-border-strong group">
                             <div className="flex items-start justify-between mb-4">
                                 <div>
-                                    <h3 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-2">
+                                    <h3 className="text-sm font-bold text-emerald-400 mb-1 flex items-center gap-2">
                                         <Sparkles className="w-4 h-4" /> AI Risk Outlook
                                     </h3>
                                     <p className="text-xs text-slate-400">Next 72 Hours</p>
                                 </div>
-                                <div className="bg-emerald-500/10 p-2 rounded-lg text-emerald-600 dark:text-emerald-500 neon-border">
+                                <div className="bg-emerald-500/10 p-2 rounded-lg text-emerald-500 neon-border">
                                     <TrendingUp className="w-5 h-5" />
                                 </div>
                             </div>
@@ -163,9 +151,9 @@ const Overview = () => {
                                     ))}
                                 </div>
                             ) : alerts.length === 0 ? (
-                                <div className="flex-1 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-800/50 border border-emerald-500/10 dark:border-emerald-500/20 rounded-xl p-6 text-center">
+                                <div className="flex-1 flex flex-col items-center justify-center bg-slate-800/50 border border-emerald-500/20 rounded-xl p-6 text-center">
                                     <ShieldCheck className="w-12 h-12 text-emerald-500 mb-3" />
-                                    <h4 className="font-bold text-slate-800 dark:text-white text-lg">All Clear</h4>
+                                    <h4 className="font-bold text-white text-lg">All Clear</h4>
                                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                         Statewide compliance is currently at 100%. No active environmental alerts.
                                     </p>
