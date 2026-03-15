@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Shield, BarChart3, User, Lock, ArrowRight,
-  Globe, Leaf, Briefcase, Eye, Factory, ShieldCheck
+  Globe, Leaf, Briefcase, Eye, Factory, ShieldCheck, Send
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import bgDark from "../assets/bg/prithvinet-bg.png";
@@ -68,16 +68,16 @@ const Login = () => {
 
       <main className="flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full px-6 lg:px-12 pt-32 lg:pt-24 pb-20 items-center justify-between relative z-10">
 
-        <div className="w-full lg:w-[45%] mb-12 lg:mb-0">
+        <div className="w-full lg:w-[45%] mb-12 lg:mb-0 flex flex-col gap-5">
           <div className="backdrop-blur-xl border shadow-xl p-10 rounded-2xl"
                style={{ backgroundColor: 'rgba(15, 23, 42, 0.4)', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
-            <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-center text-emerald-400 mb-8">
+            <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-center text-emerald-400 mb-6">
               <Leaf className="w-7 h-7" />
             </div>
-            <h1 className="text-4xl lg:text-5xl font-black leading-[1.1] mb-6 tracking-tight text-white">
+            <h1 className="text-4xl lg:text-5xl font-black leading-[1.1] mb-5 tracking-tight text-white">
               Environmental <br /> Monitoring Portal
             </h1>
-            <p className="text-lg mb-12 max-w-md font-bold leading-relaxed text-slate-400">
+            <p className="text-lg mb-8 max-w-md font-bold leading-relaxed text-slate-400">
               Official gateway for the
               <span className="text-emerald-400 font-black ml-1"> Chhattisgarh Environment Conservation Board</span>.
               Ensuring sustainable industrial growth through digital oversight.
@@ -97,6 +97,24 @@ const Login = () => {
               </div>
             </div>
           </div>
+
+          {/* Telegram Bot Banner */}
+          <a
+            href="https://t.me/PrithviNet_Alert_Bot"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center gap-4 border rounded-2xl px-6 py-4 transition-all hover:border-sky-400/60 hover:bg-sky-500/5 cursor-pointer"
+            style={{ backgroundColor: 'rgba(15, 23, 42, 0.4)', borderColor: 'rgba(14, 165, 233, 0.25)' }}
+          >
+            <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0 group-hover:bg-sky-500/20 transition-all">
+              <Send className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-black text-white">Connect to PrithviNet Bot</p>
+              <p className="text-xs text-slate-400 font-medium mt-0.5">For a seamless experience on Telegram</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-sky-400 shrink-0 group-hover:translate-x-1 transition-transform" />
+          </a>
         </div>
 
         <div className="w-full lg:w-[45%] max-w-[480px]">
