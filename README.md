@@ -115,7 +115,7 @@ Open a third terminal window:
 Bash
 ```
 cd Backend
-python bot.py
+python telegram_bot.py
 ```
 🌐 Deployment Details
 PrithviNet is optimized for deployment on Render.com.
