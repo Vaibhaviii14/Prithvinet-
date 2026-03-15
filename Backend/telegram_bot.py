@@ -1,6 +1,8 @@
 import os
 import logging
 import httpx
+import threading
+from flask import Flask
 from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
@@ -22,13 +24,31 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Constants
+# Constants (Will use Render URL in cloud, localhost for testing)
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000/api")
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 if not BOT_TOKEN:
     logger.error("TELEGRAM_BOT_TOKEN is not set in the environment.")
-    # For demo purposes, won't crash here so code can be inspected, but application will fail to run.
+
+# ==========================================
+# RENDER FREE TIER HACK: DUMMY WEB SERVER
+# ==========================================
+app_flask = Flask(__name__)
+
+@app_flask.route('/')
+def health_check():
+    return "Bot is alive and monitoring PrithviNet!"
+
+def run_dummy_server():
+    # Render assigns a dynamic PORT via environment variable. 
+    # If not found, it defaults to 10000.
+    port = int(os.environ.get("PORT", 10000))
+    # Disable Flask startup text so it doesn't clutter bot logs
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
+    app_flask.run(host="0.0.0.0", port=port)
+# ==========================================
+
 
 # Conversation States
 (
@@ -67,8 +87,8 @@ async def handle_role_selection(update: Update, context: ContextTypes.DEFAULT_TY
     
     if role == "Citizen":
         try:
-            # Aligned with backend: /api/public/dashboard-data
-            endpoint = "http://localhost:8000/api/public/dashboard-data" 
+            # FIXED: Uses dynamic API_BASE_URL
+            endpoint = f"{API_BASE_URL}/public/dashboard-data" 
             
             async with httpx.AsyncClient() as client:
                 response = await client.get(endpoint)
@@ -116,8 +136,8 @@ async def login_password(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     role = context.user_data.get('role', "").lower()
     
     try:
-        # Aligned with backend auth prefix
-        endpoint = "http://localhost:8000/api/auth/login"
+        # FIXED: Uses dynamic API_BASE_URL
+        endpoint = f"{API_BASE_URL}/auth/login"
         form_data = {"username": email, "password": password}
         
         async with httpx.AsyncClient() as client:
@@ -131,8 +151,8 @@ async def login_password(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 # Link Telegram Chat ID and Fetch Profile
                 chat_id = update.effective_chat.id
                 
-                # Fetch full user profile
-                me_endpoint = "http://localhost:8000/api/auth/me"
+                # FIXED: Uses dynamic API_BASE_URL
+                me_endpoint = f"{API_BASE_URL}/auth/me"
                 headers = {"Authorization": f"Bearer {token}"}
                 async with httpx.AsyncClient() as client:
                     me_resp = await client.get(me_endpoint, headers=headers)
@@ -230,11 +250,10 @@ async def submit_industry_data(update: Update, context: ContextTypes.DEFAULT_TYP
             parsed_dict[key.strip()] = float(val.strip())
             
         # Submission
-        # Aligned with backend ingestion prefix
-        endpoint = "http://localhost:8000/api/ingestion/manual"
+        # FIXED: Uses dynamic API_BASE_URL
+        endpoint = f"{API_BASE_URL}/ingestion/manual"
         headers = {"Authorization": f"Bearer {token}"}
         
-        # payload matching Pydantic model PollutionLogCreate
         industry_id = context.user_data.get('entity_id', "auto")
         
         payload = {
@@ -291,12 +310,10 @@ async def handle_popup_notification(update: Update, context: ContextTypes.DEFAUL
     data = query.data
     
     if data.startswith("popup_alert_"):
-        # Format: popup_alert_{param}_{value}
         parts = data.split("_")
         param = parts[2] if len(parts) > 2 else "Unknown"
         value = parts[3] if len(parts) > 3 else "N/A"
         
-        # This triggers the MODAL POPUP in the Telegram UI
         await query.answer(
             text=f"🚨 CRITICAL VIOLATION 🚨\n\nParameter: {param}\nValue: {value}\n\nPlease take immediate action!",
             show_alert=True
@@ -314,8 +331,8 @@ async def handle_ro_action(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     
     if action == "alerts":
         try:
-            # Aligned with backend alerts prefix
-            endpoint = "http://localhost:8000/api/alerts"
+            # FIXED: Uses dynamic API_BASE_URL
+            endpoint = f"{API_BASE_URL}/alerts"
             headers = {"Authorization": f"Bearer {token}"}
             
             async with httpx.AsyncClient() as client:
@@ -345,7 +362,6 @@ async def handle_ro_action(update: Update, context: ContextTypes.DEFAULT_TYPE) -
              
     elif action == "dispatch":
         await query.edit_message_text("✅ Monitoring Team successfully dispatched to high-risk locations.")
-        # Re-show the dashboard after a short delay or offer a back button
         kb = [[InlineKeyboardButton("🔙 Back to Dashboard", callback_data="back")]]
         await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(kb))
         return RO_DASHBOARD
@@ -366,6 +382,11 @@ def main():
         print("❌ Error: TELEGRAM_BOT_TOKEN environment variable not set.")
         return
 
+    # 1. Start the Flask Dummy Server in a background thread
+    keep_alive_thread = threading.Thread(target=run_dummy_server, daemon=True)
+    keep_alive_thread.start()
+
+    # 2. Start the Telegram Bot
     application = ApplicationBuilder().token(BOT_TOKEN).build()
 
     conv_handler = ConversationHandler(
@@ -383,8 +404,6 @@ def main():
     )
 
     application.add_handler(conv_handler)
-    
-    # Global handler for popup notifications
     application.add_handler(CallbackQueryHandler(handle_popup_notification, pattern="^popup_alert_"))
     
     print("🤖 PrithviNet Telegram Bot v2 running! Press Ctrl+C to stop.")
